@@ -1,0 +1,8 @@
+[project]
+name = "xiaozhi-order-agent"
+version = "0.1.0"
+description = "FDE inference cost teaching application"
+requires-python = ">=3.10"
+
+[project.scripts]
+order-agent = "order_agent.app:main"

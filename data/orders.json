@@ -1,0 +1,101 @@
+{
+  "A1024": {
+    "order_id": "A1024",
+    "customer_id": "C001",
+    "tracking_number": "TA1024",
+    "promised_date": "2026-10-28",
+    "as_of": "2026-10-29",
+    "kind": "delayed",
+    "status": "in_transit",
+    "items": [
+      {
+        "sku": "S001",
+        "name": "办公显示器",
+        "quantity": 1
+      }
+    ],
+    "warehouse_events": [
+      {
+        "date": "2026-10-27",
+        "event": "handed_to_carrier"
+      }
+    ],
+    "tracking_events": [
+      {
+        "date": "2026-10-28",
+        "event": "中转站延误",
+        "estimated_delivery": "2026-10-30"
+      }
+    ],
+    "support_history": [
+      {
+        "message": "客户询问配送进度，无已承诺补偿。"
+      }
+    ],
+    "evidence_conflict": false
+  },
+  "A1025": {
+    "order_id": "A1025",
+    "customer_id": "C001",
+    "tracking_number": "TA1025",
+    "promised_date": "2026-10-28",
+    "as_of": "2026-10-29",
+    "kind": "warehouse",
+    "status": "awaiting_dispatch",
+    "items": [
+      {
+        "sku": "S001",
+        "name": "办公显示器",
+        "quantity": 1
+      }
+    ],
+    "warehouse_events": [
+      {
+        "date": "2026-10-27",
+        "event": "packed"
+      }
+    ],
+    "tracking_events": [],
+    "support_history": [
+      {
+        "message": "客户询问配送进度，无已承诺补偿。"
+      }
+    ],
+    "evidence_conflict": false
+  },
+  "A1026": {
+    "order_id": "A1026",
+    "customer_id": "C001",
+    "tracking_number": "TA1026",
+    "promised_date": "2026-10-28",
+    "as_of": "2026-10-29",
+    "kind": "conflicting",
+    "status": "in_transit",
+    "items": [
+      {
+        "sku": "S001",
+        "name": "办公显示器",
+        "quantity": 1
+      }
+    ],
+    "warehouse_events": [
+      {
+        "date": "2026-10-27",
+        "event": "handed_to_carrier"
+      }
+    ],
+    "tracking_events": [
+      {
+        "date": "2026-10-28",
+        "event": "中转站延误",
+        "estimated_delivery": "2026-10-30"
+      }
+    ],
+    "support_history": [
+      {
+        "message": "客户询问配送进度，无已承诺补偿。"
+      }
+    ],
+    "evidence_conflict": true
+  }
+}
