@@ -34,7 +34,7 @@ def run(client,order_id,path,model='teaching-mock',max_turns=12,temperature=0,ma
    **common, 'event': 'llm_request',
    'started_at': started, 'request': request,
   })
-  logger.info("llm.start session=%s turn=%d", task_id[:8], turn+1)
+  logger.info("llm.start session=%s model_call=%s turn=%d", task_id[:8], call_id[:8], turn+1)
   try:
    response=client.complete(request)
    choice=response['choices'][0]; message=choice['message']
@@ -44,8 +44,8 @@ def run(client,order_id,path,model='teaching-mock',max_turns=12,temperature=0,ma
     'finished_at': time.time(), 'elapsed_seconds': elapsed,
     'response': response, 'status': 'ok',
    })
-   logger.info("llm.end session=%s turn=%d status=ok elapsed_ms=%.3f",
-               task_id[:8], turn+1, elapsed*1000)
+   logger.info("llm.end session=%s model_call=%s turn=%d status=ok elapsed_ms=%.3f",
+               task_id[:8], call_id[:8], turn+1, elapsed*1000)
   except Exception as e:
    logger.exception("llm.error session=%s turn=%d", task_id[:8], turn+1)
    history.write({**common,'event':'llm_error','elapsed_seconds':time.time()-started,'error':str(e),'status':'error'}); raise
@@ -61,7 +61,7 @@ def run(client,order_id,path,model='teaching-mock',max_turns=12,temperature=0,ma
   for call in calls:
    started=time.time(); function=call['function']; status='ok'
    tool_started = time.perf_counter()
-   logger.info("tool.start session=%s call=%s name=%s arguments=%s", task_id[:8], call['id'], function['name'], function['arguments'])
+   logger.info("tool.start session=%s model_call=%s tool_call=%s name=%s arguments=%s", task_id[:8], call_id[:8], call['id'], function['name'], function['arguments'])
    try: result=execute(function['name'],json.loads(function['arguments']))
    except Exception as e: result={'error':str(e)}; status='error'
    elapsed = time.perf_counter() - tool_started
@@ -71,8 +71,8 @@ def run(client,order_id,path,model='teaching-mock',max_turns=12,temperature=0,ma
     'arguments': function['arguments'], 'result': result,
     'status': status, 'started_at': started, 'elapsed_seconds': elapsed,
    })
-   logger.info("tool.end session=%s call=%s name=%s status=%s elapsed_ms=%.3f result=%s",
-               task_id[:8], call['id'], function['name'], status, elapsed*1000, json.dumps(result,ensure_ascii=False))
+   logger.info("tool.end session=%s model_call=%s tool_call=%s name=%s status=%s elapsed_ms=%.3f result=%s",
+               task_id[:8], call_id[:8], call['id'], function['name'], status, elapsed*1000, json.dumps(result,ensure_ascii=False))
    if on_tool is not None:
     on_tool({'name':function['name'], 'arguments':function['arguments'], 'result':result, 'status':status, 'tool_call_id':call['id']})
    messages.append({'role':'tool','tool_call_id':call['id'],'content':json.dumps(result,ensure_ascii=False)})
