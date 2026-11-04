@@ -1,0 +1,26 @@
+{
+  "llm": {
+    "backend": "api",
+    "base_url": "http://localhost:8000/v1",
+    "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+    "temperature": 0,
+    "max_tokens": 1024,
+    "timeout_seconds": 120
+  },
+  "agent": {
+    "max_turns": 12
+  },
+  "tracing": {
+    "directory": "../traces"
+  },
+  "mock": {
+    "model_delay_seconds": [
+      0.3,
+      0.9
+    ],
+    "tool_delay_seconds": [
+      0.05,
+      0.2
+    ]
+  }
+}

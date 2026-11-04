@@ -1,9 +1,11 @@
 import json, os, urllib.request
 from .tools import ORDERS
+from .mock_latency import simulate_latency
 class MockClient:
  """Scripted fixture, NOT an LLM. Usage is intentionally unavailable."""
  def __init__(self,order_id): self.order_id=order_id; self.step=0
  def complete(self,request):
+  simulate_latency('model')
   o=ORDERS[self.order_id]
   steps=[('get_order',{'order_id':self.order_id}),('get_warehouse_events',{'order_id':self.order_id}),('get_tracking',{'tracking_number':o['tracking_number']}),('search_policy',{'query':'订单延误'}),('get_policy_document',{'policy_id':'P-DELAY'}),('get_tracking',{'tracking_number':o['tracking_number']})]
   if self.step<len(steps):
@@ -14,9 +16,10 @@ class MockClient:
   self.step+=1
   return {'id':'mock-'+str(self.step),'model':request['model'],'choices':[{'message':message,'finish_reason':reason}], 'usage':None, 'teaching_mock':True}
 class APIClient:
- def __init__(self,base_url): self.url=base_url.rstrip('/')+'/chat/completions'
+ def __init__(self,base_url,timeout_seconds=120):
+  self.url=base_url.rstrip('/')+'/chat/completions'; self.timeout_seconds=timeout_seconds
  def complete(self,request):
   headers={'Content-Type':'application/json'}
   if os.getenv('LLM_API_KEY'): headers['Authorization']='Bearer '+os.environ['LLM_API_KEY']
   req=urllib.request.Request(self.url,data=json.dumps(request).encode(),headers=headers)
-  with urllib.request.urlopen(req,timeout=120) as response: return json.load(response)
+  with urllib.request.urlopen(req,timeout=self.timeout_seconds) as response: return json.load(response)

@@ -1,6 +1,7 @@
 """Twelve read-only mock business tools (draft creation has no external side effects)."""
 import json
 from pathlib import Path
+from .mock_latency import simulate_latency
 ORDERS = json.loads((Path(__file__).resolve().parents[1]/"data/orders.json").read_text())
 POLICY = {"id":"P-DELAY", "text":"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。"}
 SPECS = {
@@ -22,6 +23,7 @@ def execute(name,args):
  if name not in SPECS: raise ValueError("Unknown tool: "+name)
  key=SPECS[name][1]
  if set(args)!={key} or not isinstance(args[key],str): raise ValueError("Invalid arguments")
+ simulate_latency('tool')
  value=args[key]
  if key=='order_id' and value not in ORDERS: raise ValueError('Unknown order')
  o=ORDERS.get(value)
