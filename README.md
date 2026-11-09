@@ -66,3 +66,20 @@ git diff lesson1-begin..lesson1-end -- order_agent/app.py
 ```
 
 两个版本使用同一配置、随机等待和业务流程。浏览器证据列表通过内存回调展示，不依赖调试文件；开始版的界面可显示工具结果，服务日志仍故意缺少这些事件。
+
+## 课 3 · 测量和调整 vLLM
+
+`lesson3` 分支附 20 条合成订单请求、CPU 启动配置和 vLLM 测试入口。请在课程准备好的 Linux CPU 主机上运行，两个终端使用同一个 vLLM 环境。
+
+1. 在项目目录启动服务。若使用预置模型，先将 YAML 的 `model` 改成模型目录，保留 `served-model-name`。
+   ```sh
+   VLLM_CPU_KVCACHE_SPACE=1 vllm serve --config lesson3/serve-demo.yaml
+   ```
+2. 保持服务运行，在同一台机器另开终端，回到项目目录跑基线。如果使用本地模型目录，先在第二个终端执行 `export LAB_MODEL=/path/to/model`，与 YAML 中的 `model` 一致。
+   ```sh
+   bash lesson3/bench.sh baseline
+   ```
+3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 ITL、P95 E2EL（毫秒）。JSON 报告在 `lesson3/results/`。
+4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `bash lesson3/bench.sh candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
+
+客户端固定最多 4 条并发、同一批输入和 32 个输出 token 的上限，方便观察服务端调参的影响。20 条请求的结果用于课堂比较，无法代表生产容量。样本只访问模型 API，无需启动订单助手或业务工具。
