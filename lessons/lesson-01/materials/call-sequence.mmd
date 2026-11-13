@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant App as 助手程序
+    participant LLM as 模型
+    participant Tools as 业务工具
+    App->>LLM: LLM 1 请求（call_id=7e183ee5）
+    LLM-->>App: get_order
+    App->>Tools: get_order(A1024)（tool-0）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 2 请求（call_id=fdd4fd9e）
+    LLM-->>App: get_warehouse_events
+    App->>Tools: get_warehouse_events(A1024)（tool-1）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 3 请求（call_id=7a4ad290）
+    LLM-->>App: get_tracking
+    App->>Tools: get_tracking(TA1024)（tool-2）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 4 请求（call_id=b5d0cc9c）
+    LLM-->>App: search_policy
+    App->>Tools: search_policy(订单延误)（tool-3）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 5 请求（call_id=f0b7cbf1）
+    LLM-->>App: get_policy_document
+    App->>Tools: get_policy_document(P-DELAY)（tool-4）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 6 请求（call_id=d4783efd）
+    LLM-->>App: get_tracking
+    App->>Tools: get_tracking(TA1024)（tool-5）
+    Tools-->>App: 返回实际结果，status=ok
+    App->>LLM: LLM 7 请求（call_id=121b1706）
+    LLM-->>App: 最终答复

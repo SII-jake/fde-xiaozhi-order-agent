@@ -1,0 +1,10 @@
+{
+  "provenance": "教学构造，用于演示读表，不是 CPU 实测",
+  "num_prompts": 20,
+  "max_concurrency": 4,
+  "completed": 20,
+  "request_throughput": 1.6,
+  "p95_ttft_ms": 1950,
+  "p95_itl_ms": 150,
+  "p95_e2el_ms": 5700
+}

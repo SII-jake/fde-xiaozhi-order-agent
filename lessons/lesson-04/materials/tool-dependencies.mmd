@@ -1,0 +1,11 @@
+flowchart LR
+ U[用户提供order_id] --> O[get_order]
+ U --> W[get_warehouse_events]
+ Q[一般延误政策查询] --> S[search_policy]
+ O -->|tracking_number| T[get_tracking]
+ S -->|policy_id| P[get_policy_document]
+ T --> R[最终物流复查 get_tracking]
+ P -->|原设计要求先核对政策全文| R
+ W --> A[最终调查回答]
+ R --> A
+ P --> A

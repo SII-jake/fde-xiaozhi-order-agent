@@ -2,6 +2,17 @@
 
 独立的学员Git项目，Python 3.10+，运行不需要第三方依赖。业务工具全部mock，无真实退款、消息或工单提交。
 
+## 课程资料
+
+[课程方案](course-plan.md) · [课堂练习与参考答案](classroom-exercises.md)
+
+| 课程 | 讲稿、课件和材料 |
+|---|---|
+| 课程简介与第 1 课 · Agent 与可观测性 | [第 1 课](lessons/lesson-01/README.md) · [A1024 完整会话 JSON](lessons/lesson-01/materials/session-history.json) |
+| 第 2 课 · 大模型原理 | [第 2 课](lessons/lesson-02/README.md) |
+| 第 3 课 · 推理引擎部署与优化 | [第 3 课](lessons/lesson-03/README.md) · [CPU 部署手册](lessons/lesson-03/materials/vllm-deployment-lab.docx) |
+| 第 4 课 · Agent 成本优化 | [第 4 课](lessons/lesson-04/README.md) |
+
 ## 浏览器应用
 
 在本目录运行 `python3 -m order_agent.web`，然后打开 http://127.0.0.1:8080 。页面支持订单选择、调查结论和工具证据展开查看。默认离线演示；连接模型使用 `python3 -m order_agent.web --config config/api.json`。可用 `--port 8081` 更换端口。
@@ -16,7 +27,7 @@ python3 -m order_agent.analyze traces/<运行输出的文件名>.jsonl
 python3 -m unittest discover -s tests -v
 ```
 
-`lesson1-begin`只保留任务与模型调用的开始/结束日志，不保存完整trace；`lesson1-end`补齐模型与工具记录，每次运行生成独立trace文件。默认mock是确定性的脚本流程，不是真模型、不用于性能或质量结论，也不虚构token usage。三个订单：A1024运输延误、A1025未出库、A1026证据冲突。mock固定七轮用于教学对照，真实模型自行选择12个工具，不要求全用。
+默认配置是第 4 课优化前版本，记录完整 JSONL。离线 Mock 固定用七次模型调用演示 A1024 运输延误、A1025 未出库、A1026 证据冲突。
 
 ## 连接模型服务或API
 
@@ -30,7 +41,7 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 ## 代码阅读路线
 
-- `order_agent/app.py`：请求组装、模型响应、工具结果写回；`History.write`是课1定位记录代码的位置。完整实际请求与响应、关联ID、工具结果、用量和错误写入JSONL。
+- `order_agent/app.py`：请求组装、模型响应、工具结果写回；`History.write` 写入单条事件。完整实际请求与响应、关联ID、工具结果、用量和错误写入JSONL。
 - `order_agent/tools.py`：12个mock工具及真实格式JSON Schema。
 - `data/orders.json`：三个合成订单，固定业务时间，不依赖当天日期。
 - `order_agent/client.py`：离线脚本与真实API客户端。
@@ -40,9 +51,9 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 教学基线：查订单→仓库→物流→检索政策→核对全文→复查物流→回答。设计要求全文核对和最终物流复查，因此重复工具不直接视为bug；课4可以研究在不损失正确性的情况下改变设计。
 
-课1：补齐session history，用WorkBuddy还原调用序列并与设计核对；课2：用实际长度分布分析资源需求；课3：连接真实vLLM服务进行测量和参数实验；课4：合并独立工具、缩减内容、复用及路由，并保留对照。
+课1：用保存的 Session History 还原调用序列并与设计核对；课2：用实际长度分布分析资源需求；课3：连接真实vLLM服务进行测量和参数实验；课4：合并独立工具、缩减内容、复用及路由，并保留对照。
 
-生产案例背景为每副本8张H100 SXM 80GB、BF16 235B模型，12副本；这不是本地demo的硬件要求。12→8→5只是待验证假设。本项目尚不提供GPU压测、部署自动化、前缀缓存或模型路由实现，不能宣称已经验证省机器效果。真实部署和实验需有GPU环境、明确质量/延迟标准及版本核验。
+生产案例背景为每副本8张H100 SXM 80GB、BF16 235B模型，5 台服务器；这是课程案例的规模，本地演示可用 Mock 后端。缓存实际命中由推理服务决定。真实部署和实验需有GPU环境、明确质量/延迟标准及版本核验。
 
 所有数据合成。trace包含完整业务内容，仅在mock数据上直接使用；接真实客户数据前需实现脱敏及访问控制。应用完成状态不等于答案质量通过，应对照订单证据和政策人工评估。
 
@@ -50,26 +61,15 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 配置文件中的`mock.model_delay_seconds`与`mock.tool_delay_seconds`分别设置随机等待区间（秒），默认模型0.3–0.9秒、工具0.05–0.2秒。等待发生在实际mock调用内，由logging与session history记录实际经过时间；这只是教学模拟，不是GPU性能数据。设置为`[0, 0]`可关闭等待。APIClient不会插入模型延迟；当前业务工具仍是mock。
 
-课1初始服务日志在INFO级别记录`task.start`、`task.end`、`llm.start`、`llm.end`，故意缺少工具执行。完成版会把完整请求、响应、工具结果保存在结构化session history中，并将工具摘要提升至INFO级别。
+第 1 课用预先录制的日志对照初始服务日志和完整会话。样例及运行来源见[第 1 课](lessons/lesson-01/README.md)。
 
-## 课1教学分支
+## 课 4 · 优化前与参考实现
 
-- `lesson1-begin`：实操起点，保留task/LLM start与end；无完整请求、响应或工具日志。
-- `lesson1-end`：完成版，补齐模型请求/响应JSONL、工具参数/结果及耗时、状态、关联ID。
-
-```sh
-git switch lesson1-begin
-python3 -m order_agent.app
-git switch lesson1-end
-python3 -m order_agent.app
-git diff lesson1-begin..lesson1-end -- order_agent/app.py
-```
-
-两个版本使用同一配置、随机等待和业务流程。浏览器证据列表通过内存回调展示，不依赖调试文件；开始版的界面可显示工具结果，服务日志仍故意缺少这些事件。
+学员在 `main` 分支从优化前版本开始。`lesson4-optimized` 分支提供优化后的参考实现。切换方式、运行入口和结果见[第 4 课实操](lesson4/README.md)。
 
 ## 课 3 · 测量和调整 vLLM
 
-`lesson3` 分支附 20 条合成订单请求、CPU 启动配置和 vLLM 测试入口。请在课程准备好的 Linux CPU 主机上运行，两个终端使用同一个 vLLM 环境。
+`lesson3/` 目录附 20 条合成订单请求、CPU 启动配置和 vLLM 测试入口。请在课程准备好的 Linux CPU 主机上运行，两个终端使用同一个 vLLM 环境。
 
 1. 在项目目录启动服务。若使用预置模型，先将 YAML 的 `model` 改成模型目录，保留 `served-model-name`。
    ```sh

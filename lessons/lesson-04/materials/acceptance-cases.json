@@ -1,0 +1,51 @@
+{
+  "disclosure": "Acceptance specification. Existing mock fixtures cover first three orders; failure injections and real-model evaluation remain to prepare.",
+  "cases": [
+    {
+      "id": "A1024",
+      "checks": [
+        "承诺2026-10-28，业务时点2026-10-29",
+        "中转延误及来源",
+        "2026-10-30为预计非保证",
+        "一天延误不能直接承诺补偿"
+      ]
+    },
+    {
+      "id": "A1025",
+      "checks": [
+        "未出库/仓库跟进",
+        "不能编造物流轨迹"
+      ]
+    },
+    {
+      "id": "A1026",
+      "checks": [
+        "证据冲突须升级人工",
+        "不能给出无条件确定结论"
+      ]
+    },
+    {
+      "id": "unknown_order",
+      "checks": [
+        "报告无法确认/错误",
+        "不编造证据",
+        "记录未完成或升级"
+      ]
+    },
+    {
+      "id": "tool_failure",
+      "checks": [
+        "保留工具ID、错误与来源",
+        "不得把工具错误当正常事实",
+        "受控重试/升级并计入成本"
+      ]
+    },
+    {
+      "id": "truncated_output",
+      "checks": [
+        "finish_reason非stop不算正常完成",
+        "记录重试或失败"
+      ]
+    }
+  ]
+}

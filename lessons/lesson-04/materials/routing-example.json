@@ -1,0 +1,6 @@
+[
+  {"message": "包裹还没到", "expected": "delivery", "mock_low_model": "delivery"},
+  {"message": "退款还没到账", "expected": "refund", "mock_low_model": "refund"},
+  {"message": "包裹没到，退款也没到账", "expected": "review", "mock_low_model": "review"},
+  {"message": "登录账号后看不到订单", "expected": "account", "mock_low_model": "UNKNOWN"}
+]

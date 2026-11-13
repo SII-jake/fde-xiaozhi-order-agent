@@ -1,0 +1,53 @@
+{
+  "measurement": "同一 Qwen 聊天模板与分词器离线复算，输出包含工具调用和消息结束标记。两版都按同一 Qwen 分词口径统计，不折算模型价格，数值不等同于 API usage。",
+  "orders": {
+    "A1024": {
+      "baseline": {
+        "span_count": 13,
+        "model_calls": 7,
+        "tool_calls": 6,
+        "input_tokens": 12325,
+        "output_tokens": 200
+      },
+      "optimized": {
+        "span_count": 9,
+        "model_calls": 3,
+        "tool_calls": 6,
+        "input_tokens": 3653,
+        "output_tokens": 143
+      }
+    },
+    "A1025": {
+      "baseline": {
+        "span_count": 13,
+        "model_calls": 7,
+        "tool_calls": 6,
+        "input_tokens": 12099,
+        "output_tokens": 180
+      },
+      "optimized": {
+        "span_count": 7,
+        "model_calls": 3,
+        "tool_calls": 4,
+        "input_tokens": 3435,
+        "output_tokens": 103
+      }
+    },
+    "A1026": {
+      "baseline": {
+        "span_count": 13,
+        "model_calls": 7,
+        "tool_calls": 6,
+        "input_tokens": 12325,
+        "output_tokens": 179
+      },
+      "optimized": {
+        "span_count": 9,
+        "model_calls": 3,
+        "tool_calls": 6,
+        "input_tokens": 3653,
+        "output_tokens": 130
+      }
+    }
+  }
+}

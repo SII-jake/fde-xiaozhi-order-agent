@@ -1,0 +1,14 @@
+--- a/order_agent/app.py
++++ b/order_agent/app.py
+@@ -75,7 +75,10 @@
+                task_id[:8], call_id[:8], call['id'], function['name'], status, elapsed*1000, json.dumps(result,ensure_ascii=False))
+    if on_tool is not None:
+     on_tool({'name':function['name'], 'arguments':function['arguments'], 'result':result, 'status':status, 'tool_call_id':call['id']})
+-   messages.append({'role':'tool','tool_call_id':call['id'],'content':json.dumps(result,ensure_ascii=False)})
++   model_result = result
++   if status == 'ok' and function['name'] == 'get_policy_document' and isinstance(result, dict):
++    model_result = {key: value for key, value in result.items() if key != 'front_matter'}
++   messages.append({'role':'tool','tool_call_id':call['id'],'content':json.dumps(model_result,ensure_ascii=False)})
+  history.write({'task_id':task_id,'event':'task_end','status':'turn_limit'}); raise RuntimeError('Maximum model turns reached')
+ def main():
+  configure_logging()

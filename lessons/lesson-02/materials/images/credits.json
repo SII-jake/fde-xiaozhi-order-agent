@@ -1,0 +1,26 @@
+{
+  "assets": [
+    {
+      "image": "h100-sxm5.jpg",
+      "source_page": "https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/",
+      "image_url": "https://developer-blogs.nvidia.com/wp-content/uploads/2022/03/SXM5-White-4-NEW-FINAL.jpg",
+      "credit": "NVIDIA, Figure 1, H100 GPU on SXM5 Module",
+      "kind": "official hardware product image, not a photograph taken for this course",
+      "retrieved_on": "2026-11-04"
+    },
+    {
+      "image": "transformer-original.png",
+      "source": "https://arxiv.org/html/1706.03762v7",
+      "figure": "Figure 1",
+      "authors": "Vaswani et al.",
+      "credit": "Attention Is All You Need, 2017",
+      "usage_note": "original paper grants reproduction of figures for journalistic or scholarly works with attribution"
+    },
+    {
+      "image": "nvidia-smi-h100-lenovo.png",
+      "source": "https://pubs.lenovo.com/sr780a-v3/h100_gpu_problems",
+      "credit": "Lenovo official server documentation",
+      "state": "idle eight-H100 server; native PPT viewport zooms first two GPU entries; no values edited"
+    }
+  ]
+}

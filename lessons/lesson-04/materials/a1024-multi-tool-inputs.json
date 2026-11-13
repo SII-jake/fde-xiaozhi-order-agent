@@ -1,0 +1,81 @@
+{
+  "order": "A1024",
+  "source": "lesson1-end replay with the first assistant message from multi-tool-message.json and the policy PDF fixture policy-document-front-matter.json",
+  "tokenizer": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+  "disclosure": "Offline Qwen input token counts. Front-matter filtering was rerun through the application. Final-turn tool selection is an offline request comparison. Cache hits and fees are illustrative assumptions.",
+  "single_tool_total": 11527,
+  "rows": [
+    {
+      "turn": 1,
+      "tool_names": [
+        "get_order",
+        "get_warehouse_events"
+      ],
+      "offline_input_tokens": 1312,
+      "without_front_matter": 1312
+    },
+    {
+      "turn": 2,
+      "tool_names": [
+        "get_tracking"
+      ],
+      "offline_input_tokens": 1493,
+      "without_front_matter": 1493
+    },
+    {
+      "turn": 3,
+      "tool_names": [
+        "search_policy"
+      ],
+      "offline_input_tokens": 1582,
+      "without_front_matter": 1582
+    },
+    {
+      "turn": 4,
+      "tool_names": [
+        "get_policy_document"
+      ],
+      "offline_input_tokens": 1664,
+      "without_front_matter": 1664
+    },
+    {
+      "turn": 5,
+      "tool_names": [
+        "get_tracking"
+      ],
+      "offline_input_tokens": 1950,
+      "without_front_matter": 1745
+    },
+    {
+      "turn": 6,
+      "tool_names": [],
+      "offline_input_tokens": 2039,
+      "without_front_matter": 1834
+    }
+  ],
+  "final_turn_tools": {
+    "turn": 6,
+    "retained_tools": 12,
+    "lower_hit": {
+      "input_tokens": 1834,
+      "shared_with_previous": 1745,
+      "assumed_hit": 1280,
+      "assumed_miss": 554,
+      "input_fee_usd": "0.000173880"
+    },
+    "higher_hit": {
+      "input_tokens": 1834,
+      "shared_with_previous": 1745,
+      "assumed_hit": 1728,
+      "assumed_miss": 106,
+      "input_fee_usd": "0.000042168"
+    },
+    "no_tools": {
+      "input_tokens": 603,
+      "shared_with_previous": 49,
+      "assumed_hit": 0,
+      "assumed_miss": 603,
+      "input_fee_usd": "0.000180900"
+    }
+  }
+}

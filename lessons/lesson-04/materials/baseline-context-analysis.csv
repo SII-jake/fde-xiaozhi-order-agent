@@ -1,0 +1,8 @@
+turn,call_id,offline_input_tokens,tool_definition_count,system_chars,user_chars,assistant_content_chars,tool_result_chars,api_usage
+1,7e183ee5-1177-4513-a669-65c2ca24ed70,1312,12,77,31,0,0,
+2,fdd4fd9e-cd7a-4a71-98e5-aefd647caaf6,1437,12,77,31,0,198,
+3,7a4ad290-5e64-40b4-9323-0e6e438564a4,1503,12,77,31,0,252,
+4,b5d0cc9c-a25a-4302-8aff-bb04e944f9f1,1592,12,77,31,0,370,
+5,f0b7cbf1-0d63-427a-acee-af2db041486b,1674,12,77,31,0,465,
+6,d4783efd-6c8c-40cd-8476-db41f4467073,2359,12,77,31,0,1599,
+7,121b1706-83a2-494f-a0ab-4b3a0be83f75,2448,12,77,31,0,1717,
