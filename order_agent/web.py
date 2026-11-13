@@ -51,9 +51,9 @@ def main():
                     raise ValueError('Unknown order')
                 llm = config['llm']
                 path = Path(config['tracing']['directory']) / (str(uuid.uuid4()) + '.jsonl')
-                client = MockClient(order) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
+                client = MockClient(order, optimized=bool(config['agent'].get('optimization'))) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
                 tool_events = []
-                answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append)
+                answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append, optimization=config['agent'].get('optimization'))
                 self.send(200, {'answer': answer, 'tools': tool_events, 'trace': path.name if path.exists() else None})
             except ValueError as exc:
                 self.send(400, {'error': str(exc)})

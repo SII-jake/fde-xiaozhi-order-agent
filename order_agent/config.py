@@ -20,6 +20,12 @@ def load_config(path=DEFAULT_CONFIG):
         raise ValueError("temperature must be between 0 and 2")
     if type(llm["timeout_seconds"]) not in (int, float) or llm["timeout_seconds"] <= 0:
         raise ValueError("timeout_seconds must be positive")
+    optimization = agent.get("optimization")
+    if optimization is not None:
+        if not isinstance(optimization, dict) or not isinstance(optimization.get("simple"), str) or not optimization["simple"].strip():
+            raise ValueError("agent.optimization.simple must name the model for simple tasks")
+        if optimization["simple"] == llm["model"]:
+            raise ValueError("The simple and investigation models must be distinct")
     tracing["directory"] = str((path.parent / tracing["directory"]).resolve())
     config["mock"] = validate_settings(config.get("mock", {}))
     return config
