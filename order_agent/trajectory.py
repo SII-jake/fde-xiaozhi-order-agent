@@ -78,6 +78,6 @@ def write_trajectory(raw_path, destination):
         try:
             file.write(content)
             file.close()
-            temporary.hardlink_to(destination)
+            destination.hardlink_to(temporary)
         finally:
             temporary.unlink()
