@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from .mock_latency import validate_settings
-DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "config/local.json"
+DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "config/optimized.json"
 def load_config(path=DEFAULT_CONFIG):
     path = Path(path).resolve()
     config = json.loads(path.read_text())

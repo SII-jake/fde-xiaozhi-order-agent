@@ -27,7 +27,7 @@ python3 -m order_agent.analyze traces/<运行输出的文件名>.jsonl
 python3 -m unittest discover -s tests -v
 ```
 
-默认配置是第 4 课优化前版本，记录完整 JSONL。离线 Mock 固定用七次模型调用演示 A1024 运输延误、A1025 未出库、A1026 证据冲突。
+本分支默认从 `config/optimized.json` 加载第 4 课参考实现，记录完整 JSONL。离线 Mock 演示 A1024 运输延误、A1025 未出库、A1026 证据冲突。用 `--config config/local.json` 可在本分支复跑基线。
 
 ## 连接模型服务或API
 
@@ -35,7 +35,7 @@ python3 -m unittest discover -s tests -v
 python3 -m order_agent.app --config config/api.json
 ```
 
-默认读取 `config/local.json`（离线mock），真实服务使用 `config/api.json`。模型地址、模型名、生成参数、超时、轮数上限及trace目录统一在配置文件管理；trace目录相对配置文件解析。业务输入仍可用 `--order A1025` 指定。
+默认读取 `config/optimized.json`（离线 Mock）。连接真实 API 的配置方式见[第 4 课实操](lesson4/README.md)。模型地址、模型名、生成参数、超时、轮数上限及trace目录统一在配置文件管理；trace目录相对配置文件解析。业务输入仍可用 `--order A1025` 指定。
 
 API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必须支持Chat Completions工具调用；vLLM的工具调用解析器需与模型及安装版本匹配。应用支持一轮多个工具调用，当前逐个执行；并行执行是课4练习。网络调用不自动重试，错误被记录；工具错误回传模型，最大12轮防止无界循环。
 
