@@ -1,5 +1,5 @@
 {
-  "provenance": "实际教学代码离线运行；脚本mock，不是真实模型推理；usage为空，时间不代表GPU性能",
+  "provenance": "订单助手使用 Mock 后端的实际运行记录。为课堂演算，仅在各 llm_response.response.usage 补入模拟用量。",
   "events": [
     {
       "task_id": "43e0b91f-a6b0-4fbb-afae-58ac681a65cd",
@@ -284,7 +284,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 1312,
+          "completion_tokens": 32,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 1312,
+          "total_tokens": 1344
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -614,7 +620,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 1437,
+          "completion_tokens": 35,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 413,
+          "total_tokens": 1472
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -959,7 +971,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 1503,
+          "completion_tokens": 33,
+          "prompt_cache_hit_tokens": 1280,
+          "prompt_cache_miss_tokens": 223,
+          "total_tokens": 1536
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -1327,7 +1345,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 1592,
+          "completion_tokens": 34,
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 184,
+          "total_tokens": 1626
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -1712,7 +1736,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 1674,
+          "completion_tokens": 35,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 138,
+          "total_tokens": 1709
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -2154,7 +2184,13 @@
             "finish_reason": "tool_calls"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 2359,
+          "completion_tokens": 31,
+          "prompt_cache_hit_tokens": 1664,
+          "prompt_cache_miss_tokens": 695,
+          "total_tokens": 2390
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -2569,7 +2605,13 @@
             "finish_reason": "stop"
           }
         ],
-        "usage": null,
+        "usage": {
+          "prompt_tokens": 2448,
+          "completion_tokens": 180,
+          "prompt_cache_hit_tokens": 2304,
+          "prompt_cache_miss_tokens": 144,
+          "total_tokens": 2628
+        },
         "teaching_mock": true
       },
       "status": "ok"
@@ -2582,66 +2624,5 @@
       "event": "task_end",
       "status": "completed"
     }
-  ],
-  "teaching_usage": {
-    "note": "按模型调用序号 turn 对照。总输入为离线复算，缓存命中和输出为教学设定。原始模型响应的 usage 仍为空。",
-    "calls": [
-      {
-        "task_id": "A1024",
-        "turn": 1,
-        "prompt_tokens": 1312,
-        "prompt_cache_hit_tokens": 0,
-        "prompt_cache_miss_tokens": 1312,
-        "completion_tokens": 32
-      },
-      {
-        "task_id": "A1024",
-        "turn": 2,
-        "prompt_tokens": 1437,
-        "prompt_cache_hit_tokens": 1024,
-        "prompt_cache_miss_tokens": 413,
-        "completion_tokens": 35
-      },
-      {
-        "task_id": "A1024",
-        "turn": 3,
-        "prompt_tokens": 1503,
-        "prompt_cache_hit_tokens": 1280,
-        "prompt_cache_miss_tokens": 223,
-        "completion_tokens": 33
-      },
-      {
-        "task_id": "A1024",
-        "turn": 4,
-        "prompt_tokens": 1592,
-        "prompt_cache_hit_tokens": 1408,
-        "prompt_cache_miss_tokens": 184,
-        "completion_tokens": 34
-      },
-      {
-        "task_id": "A1024",
-        "turn": 5,
-        "prompt_tokens": 1674,
-        "prompt_cache_hit_tokens": 1536,
-        "prompt_cache_miss_tokens": 138,
-        "completion_tokens": 35
-      },
-      {
-        "task_id": "A1024",
-        "turn": 6,
-        "prompt_tokens": 2359,
-        "prompt_cache_hit_tokens": 1664,
-        "prompt_cache_miss_tokens": 695,
-        "completion_tokens": 31
-      },
-      {
-        "task_id": "A1024",
-        "turn": 7,
-        "prompt_tokens": 2448,
-        "prompt_cache_hit_tokens": 2304,
-        "prompt_cache_miss_tokens": 144,
-        "completion_tokens": 180
-      }
-    ]
-  }
+  ]
 }
