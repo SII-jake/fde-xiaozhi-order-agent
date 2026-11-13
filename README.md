@@ -6,16 +6,16 @@
 
 | 练习 | 要求 | 发放材料 |
 |---|---|---|
-| 1. 分析订单调查日志 | 用 WorkBuddy 画出 A1024 的模型和工具调用轨迹，再汇总同一文件中的教学 Token 用量。 | [A1024 完整会话 JSON](materials/session-history.json) |
+| 1. 分析订单调查日志 | 用 WorkBuddy 画出 A1024 的模型和工具调用轨迹，并汇总各次模型响应的 Token 用量。 | [A1024 完整会话 JSON](materials/session-history.json) |
 | 2. 计算 KV Cache 节省的工作量 | 算出有缓存和无缓存时处理的 Token 位置数，再算节省比例。 | |
 | 3. 估算模型部署显存 | 查模型参数，估算权重、KV Cache 和预留空间，判断一张 80 GB 卡能否部署 Qwen3-32B。 | |
-| 4. 在 CPU 上部署模型 | 用 vLLM 启动 Qwen3-0.6B，发出一条请求并确认收到有效响应。 | [CPU 部署手册](materials/vllm-deployment-lab.docx)和[启动配置](materials/serve-demo.yaml) |
-| 5. 测量并分析性能基线 | 运行压测，记录成功率、吞吐和 P95 延迟，用数据写出一项发现。 | [性能测试脚本](materials/bench.sh)和[固定的 20 条请求](materials/requests.jsonl) |
+| 4. 在 CPU 上部署模型 | 用 vLLM 启动 Qwen3-0.6B，发出一条请求并确认收到有效响应。 | 见下方部署步骤和[启动配置](materials/serve-demo.yaml) |
+| 5. 测量并分析性能基线 | 运行压测，记录成功率、吞吐和 P95 延迟，用数据写出一项发现。 | [性能测试脚本](materials/bench.py)和[固定的 20 条请求](materials/requests.jsonl) |
 | 6. 调参并复测 | 只改一项服务参数，比较吞吐、成功率和延迟，决定是否保留改动。 | 沿用练习 5 的测试脚本、请求和基线报告 |
-| 7. 计算整单 API 费用 | 用课件费率计算逐次费用、整单费用和输入全命中时的理论费用。 | 沿用练习 1 的 JSON，读取 `teaching_usage.calls` |
+| 7. 计算整单 API 费用 | 用课件费率计算逐次费用、整单费用和输入全命中时的理论费用。 | 沿用练习 1 的 JSON，读取各次响应的 `usage` |
 | 8. 用 WorkBuddy 优化订单调查助手 | 按课堂方法优化 Demo，提交优化后的模型调用次数、输入 Token 数和输出 Token 数。 | `lesson4-optimized` 分支 |
 
-练习 5 从项目根目录运行 `bash materials/bench.sh baseline`。练习 8 从 `main` 分支出发，讲评时切到 `lesson4-optimized` 分支的工作目录，再运行 `python3 -m order_agent.app --config config/optimized.json --order A1024` 对照参考实现。
+练习 5 从项目根目录运行 `python3 materials/bench.py baseline`。练习 8 从 `main` 分支出发，讲评时切到 `lesson4-optimized` 分支的工作目录，再运行 `python3 -m order_agent.app --config config/optimized.json --order A1024` 对照参考实现。
 
 ## 浏览器应用
 
@@ -65,7 +65,7 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 配置文件中的`mock.model_delay_seconds`与`mock.tool_delay_seconds`分别设置随机等待区间（秒），默认模型0.3–0.9秒、工具0.05–0.2秒。等待发生在实际mock调用内，由logging与session history记录实际经过时间；这只是教学模拟，不是GPU性能数据。设置为`[0, 0]`可关闭等待。APIClient不会插入模型延迟；当前业务工具仍是mock。
 
-第 1 课用预先录制的日志对照初始服务日志和完整会话。学员练习用[完整会话 JSON](materials/session-history.json)。
+[完整会话 JSON](materials/session-history.json)来自订单助手实际运行 Mock 后端的记录，随项目发放的 JSON 只在响应的 `usage` 中补了模拟用量，供第 1、7 项练习使用。接真实模型时读取服务实际返回的用量。
 
 ## 课 3 · 测量和调整 vLLM
 
@@ -75,14 +75,14 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
    ```sh
    VLLM_CPU_KVCACHE_SPACE=1 vllm serve --config materials/serve-demo.yaml
    ```
-2. 保持服务运行，在同一台机器另开终端，回到项目目录跑基线。如果使用本地模型目录，先在第二个终端执行 `export LAB_MODEL=/path/to/model`，与 YAML 中的 `model` 一致。
+2. 保持服务运行，在同一台机器另开终端，回到项目目录跑基线。
    ```sh
-   bash materials/bench.sh baseline
+   python3 materials/bench.py baseline
    ```
-3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 ITL、P95 E2EL（毫秒）。JSON 报告在 `materials/results/`。
-4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `bash materials/bench.sh candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
+3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 流式片段间隔、P95 E2EL（毫秒）。JSON 报告在 `materials/results/`。
+4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `python3 materials/bench.py candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
 
-客户端固定最多 4 条并发、同一批输入和 32 个输出 token 的上限，方便观察服务端调参的影响。20 条请求的结果用于课堂比较，无法代表生产容量。样本只访问模型 API，无需启动订单助手或业务工具。
+客户端固定最多 4 条并发、`requests.jsonl` 里的 20 条合成订单提示词和 32 个输出 Token 的上限，方便观察服务端调参的影响。脚本只用 Python 标准库。TTFT 按首个可见文本片段计时。单个流式片段可能包含多个 Token，片段间隔用 `p95_chunk_gap_ms` 报告。20 条请求的结果用于课堂比较，无法代表生产容量。样本只访问模型 API，无需启动订单助手或业务工具。
 
 ## 练习 8 · Agent 优化
 
@@ -115,4 +115,4 @@ python3 -m materials.compare
 - `python3 -m materials.compare` 对两版使用同一旗舰模型标识作为取证基线。它保留两个流程的调用、请求字符数、末轮工具数和答复对照。输入字符数不是 Token 数。缓存命中、账单和真实模型质量需要在线复测。
 - 若有合适的 API，在 `config/` 下复制 `optimized.json`，将新配置的 `llm.backend` 改成 `api`，并通过 `LLM_API_KEY` 提供凭证。再复制一份 API 配置并删除 `agent.optimization` 作为在线基线。两版用同一模型端点和价目。清空工具的请求带历史工具消息，先验证服务端兼容性。
 
-在参考分支安装 `tokenizers` 和 `jinja2` 后，运行 `python3 -m materials.measure_span_tokens`，用随项目提供的 Qwen 分词器复算三笔样例的模型调用次数、输入 Token 和输出 Token。
+参考分支保留 Qwen 分词器供离线复算。在该分支安装 `tokenizers` 和 `jinja2` 后，运行 `python3 -m materials.measure_span_tokens`，用随项目提供的 Qwen 分词器复算三笔样例的模型调用次数、输入 Token 和输出 Token。
