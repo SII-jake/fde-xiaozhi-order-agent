@@ -14,7 +14,7 @@ from order_agent.config import load_config
 from order_agent.tools import ORDERS
 
 ROOT = Path(__file__).resolve().parents[1]
-TOKENIZER_DIR = ROOT / "lessons/lesson-02/materials/tokenizer"
+TOKENIZER_DIR = ROOT / "materials"
 
 
 def measure(order, trace, config, encode):

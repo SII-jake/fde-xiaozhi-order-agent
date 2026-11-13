@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -ne 1 || ! "$1" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]]; then
-    echo "用法：bash lesson3/bench.sh <本次记录名称>，例如 baseline" >&2
+    echo "用法：bash materials/bench.sh <本次记录名称>，例如 baseline" >&2
     exit 2
 fi
 
