@@ -6,7 +6,7 @@
 
 | 练习 | 要求 | 发放材料 |
 |---|---|---|
-| 1. 分析订单调查日志 | 用 WorkBuddy 画出 A1024 的模型和工具调用轨迹，并汇总各次模型响应的 Token 用量。 | [A1024 完整会话 JSON](materials/session-history.json) |
+| 1. 分析订单调查日志 | 用 WorkBuddy 画出 A1024 的模型和工具调用轨迹，并汇总各次模型响应的 Token 用量。 | [A1024 完整会话 JSON](materials/session-trajectory.json) |
 | 2. 计算 KV Cache 节省的工作量 | 算出有缓存和无缓存时处理的 Token 位置数，再算节省比例。 | |
 | 3. 估算模型部署显存 | 查模型参数，估算权重、KV Cache 和预留空间，判断一张 80 GB 卡能否部署 Qwen3-32B。 | |
 | 4. 在 CPU 上部署模型 | 用 vLLM 启动 Qwen3-0.6B，发出一条请求并确认收到有效响应。 | 见下方部署步骤和[启动配置](materials/serve-demo.yaml) |
@@ -27,7 +27,7 @@
 
 ```sh
 python3 -m order_agent.app
-python3 -m order_agent.analyze traces/<运行输出的文件名>.jsonl
+python3 -m order_agent.analyze traces/<运行输出的文件名>-session-trajectory.json
 python3 -m unittest discover -s tests -v
 ```
 
@@ -65,7 +65,7 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 配置文件中的`mock.model_delay_seconds`与`mock.tool_delay_seconds`分别设置随机等待区间（秒），默认模型0.3–0.9秒、工具0.05–0.2秒。等待发生在实际mock调用内，由logging与session history记录实际经过时间；这只是教学模拟，不是GPU性能数据。设置为`[0, 0]`可关闭等待。APIClient不会插入模型延迟；当前业务工具仍是mock。
 
-[完整会话 JSON](materials/session-history.json)来自订单助手实际运行 Mock 后端的记录，随项目发放的 JSON 只在响应的 `usage` 中补了模拟用量，供第 1、7 项练习使用。接真实模型时读取服务实际返回的用量。
+[完整会话 JSON](materials/session-trajectory.json)来自订单助手实际运行 Mock 后端的记录，随项目发放的 JSON 只在响应的 `usage` 中补了模拟用量，供第 1、7 项练习使用。接真实模型时读取服务实际返回的用量。
 
 ## 课 3 · 测量和调整 vLLM
 
@@ -86,11 +86,23 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 ## 练习 8 · Agent 优化
 
+同一订单在改动前后各跑一次，保留两份结果。CLI 和浏览器每次处理请求都会在日志目录生成轨迹 JSON，CLI 也可以指定路径。
+
+```sh
+# 改代码前
+python3 -m order_agent.app --order A1024 --trajectory traces/baseline.json
+# 改代码后
+python3 -m order_agent.app --order A1024 --trajectory traces/optimized.json
+```
+
+对照两份 JSON 的 `summary`，报告 `model_calls`、`input_tokens` 和 `output_tokens`。先确认两次都完成且 `token_source` 相同。API 使用服务返回的原始用量。离线 Mock 在汇总层以 JSON 字节数估算 Token，两版用同一口径；逐次响应仍保留原样。练习 1 和 7 的样例含单独标注的课堂模拟用量，用于读日志和算费用。
+
+
 发给 WorkBuddy 的任务：
 
-> 请用同样的 A1024、A1025、A1026 跑优化前后两版，保留 JSONL。选择一项减少调用和一项减少单次用量的改动。逐单给出模型调用次数，再汇总整单输入和输出 Token。A1024 核对预计送达日，A1025 核对未出库，A1026 核对冲突升级。
+> 请用同样的 A1024、A1025、A1026 跑优化前后两版，保留自动生成的轨迹 JSON。选择一项减少调用和一项减少单次用量的改动。逐单给出模型调用次数，再汇总整单输入和输出 Token。A1024 核对预计送达日，A1025 核对未出库，A1026 核对冲突升级。
 
-每次发出模型请求计一次，回退的模型调用单独计入。逐次汇总输入和输出 Token，输入包含缓存命中部分。API 用实际 usage。Mock 用第 2 课同一 Qwen 聊天模板和分词器复算请求，对模型输出（含工具调用）离线分词，并标注为离线估算。
+每次发出模型请求计一次，回退的模型调用单独计入。逐次汇总输入和输出 Token，输入包含缓存命中部分。API 用实际 usage。Mock 使用运行时轨迹里的估算值，报告里注明估算口径。
 
 ### 参考实现
 

@@ -4,6 +4,7 @@ from .client import MockClient, APIClient
 from .tools import definitions, execute, ORDERS
 from .config import load_config, DEFAULT_CONFIG
 from .mock_latency import configure as configure_mock_latency
+from .trajectory import default_path, write_trajectory
 logger = logging.getLogger("order_agent")
 
 def configure_logging():
@@ -82,11 +83,19 @@ def main():
  p=argparse.ArgumentParser(description="小智的订单调查助手")
  p.add_argument('--config',default=str(DEFAULT_CONFIG),help='JSON配置文件')
  p.add_argument('--order',choices=list(ORDERS),default='A1024',help='业务订单编号')
+ p.add_argument('--trajectory', type=Path, help='输出会话轨迹 JSON 的路径')
  a=p.parse_args()
+ if a.trajectory is not None and a.trajectory.exists():
+  p.error(f'轨迹文件已存在：{a.trajectory}')
  config=load_config(a.config); llm=config['llm']
  configure_mock_latency(config['mock'])
  path=Path(config['tracing']['directory'])/(str(uuid.uuid4())+'.jsonl')
  client=MockClient(a.order) if llm['backend']=='mock' else APIClient(llm['base_url'],llm['timeout_seconds'])
- print(run(client,a.order,path,'teaching-mock' if llm['backend']=='mock' else llm['model'],config['agent']['max_turns'],llm['temperature'],llm['max_tokens']))
- print('Session history:',path)
+ destination = a.trajectory if a.trajectory is not None else default_path(path)
+ try:
+  print(run(client,a.order,path,'teaching-mock' if llm['backend']=='mock' else llm['model'],config['agent']['max_turns'],llm['temperature'],llm['max_tokens']))
+ finally:
+  if path.exists():
+   write_trajectory(path, destination)
+   print('Session trajectory:', destination)
 if __name__=='__main__': main()
