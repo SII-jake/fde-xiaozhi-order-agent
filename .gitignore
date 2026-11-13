@@ -2,6 +2,6 @@ __pycache__/
 *.pyc
 .env
 traces/
-lesson3/results/
+materials/results/
 
 .DS_Store

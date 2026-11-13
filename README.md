@@ -2,16 +2,20 @@
 
 独立的学员Git项目，Python 3.10+，运行不需要第三方依赖。业务工具全部mock，无真实退款、消息或工单提交。
 
-## 课程资料
+## 课堂练习
 
-[课程方案](course-plan.md) · [课堂练习与参考答案](classroom-exercises.md)
+| 练习 | 要求 | 发放材料 |
+|---|---|---|
+| 1. 分析订单调查日志 | 用 WorkBuddy 画出 A1024 的模型和工具调用轨迹，再汇总同一文件中的教学 Token 用量。 | [A1024 完整会话 JSON](materials/session-history.json) |
+| 2. 计算 KV Cache 节省的工作量 | 算出有缓存和无缓存时处理的 Token 位置数，再算节省比例。 | |
+| 3. 估算模型部署显存 | 查模型参数，估算权重、KV Cache 和预留空间，判断一张 80 GB 卡能否部署 Qwen3-32B。 | |
+| 4. 在 CPU 上部署模型 | 用 vLLM 启动 Qwen3-0.6B，发出一条请求并确认收到有效响应。 | [CPU 部署手册](materials/vllm-deployment-lab.docx)和[启动配置](materials/serve-demo.yaml) |
+| 5. 测量并分析性能基线 | 运行压测，记录成功率、吞吐和 P95 延迟，用数据写出一项发现。 | [性能测试脚本](materials/bench.sh)和[固定的 20 条请求](materials/requests.jsonl) |
+| 6. 调参并复测 | 只改一项服务参数，比较吞吐、成功率和延迟，决定是否保留改动。 | 沿用练习 5 的测试脚本、请求和基线报告 |
+| 7. 计算整单 API 费用 | 用课件费率计算逐次费用、整单费用和输入全命中时的理论费用。 | 沿用练习 1 的 JSON，读取 `teaching_usage.calls` |
+| 8. 用 WorkBuddy 优化订单调查助手 | 按课堂方法优化 Demo，提交优化后的模型调用次数、输入 Token 数和输出 Token 数。 | `lesson4-optimized` 分支 |
 
-| 课程 | 讲稿、课件和材料 |
-|---|---|
-| 课程简介与第 1 课 · Agent 与可观测性 | [第 1 课](lessons/lesson-01/README.md) · [A1024 完整会话 JSON](lessons/lesson-01/materials/session-history.json) |
-| 第 2 课 · 大模型原理 | [第 2 课](lessons/lesson-02/README.md) |
-| 第 3 课 · 推理引擎部署与优化 | [第 3 课](lessons/lesson-03/README.md) · [CPU 部署手册](lessons/lesson-03/materials/vllm-deployment-lab.docx) |
-| 第 4 课 · Agent 成本优化 | [第 4 课](lessons/lesson-04/README.md) |
+练习 5 从项目根目录运行 `bash materials/bench.sh baseline`。练习 8 从 `main` 分支出发，讲评时切到 `lesson4-optimized` 分支的工作目录，再运行 `python3 -m order_agent.app --config config/optimized.json --order A1024` 对照参考实现。
 
 ## 浏览器应用
 
@@ -27,7 +31,7 @@ python3 -m order_agent.analyze traces/<运行输出的文件名>.jsonl
 python3 -m unittest discover -s tests -v
 ```
 
-默认配置是第 4 课优化前版本，记录完整 JSONL。离线 Mock 固定用七次模型调用演示 A1024 运输延误、A1025 未出库、A1026 证据冲突。
+`main` 默认运行优化前版本，`lesson4-optimized` 默认运行优化后参考实现。两者都记录 JSONL，覆盖 A1024 运输延误、A1025 未出库、A1026 证据冲突。
 
 ## 连接模型服务或API
 
@@ -35,7 +39,7 @@ python3 -m unittest discover -s tests -v
 python3 -m order_agent.app --config config/api.json
 ```
 
-默认读取 `config/local.json`（离线mock），真实服务使用 `config/api.json`。模型地址、模型名、生成参数、超时、轮数上限及trace目录统一在配置文件管理；trace目录相对配置文件解析。业务输入仍可用 `--order A1025` 指定。
+在 `main` 默认读取 `config/local.json`，在参考分支默认读取 `config/optimized.json`。可通过配置文件指定真实模型服务。模型地址、模型名、生成参数、超时、轮数上限及trace目录统一在配置文件管理；trace目录相对配置文件解析。业务输入仍可用 `--order A1025` 指定。
 
 API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必须支持Chat Completions工具调用；vLLM的工具调用解析器需与模型及安装版本匹配。应用支持一轮多个工具调用，当前逐个执行；并行执行是课4练习。网络调用不自动重试，错误被记录；工具错误回传模型，最大12轮防止无界循环。
 
@@ -43,7 +47,7 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 - `order_agent/app.py`：请求组装、模型响应、工具结果写回；`History.write` 写入单条事件。完整实际请求与响应、关联ID、工具结果、用量和错误写入JSONL。
 - `order_agent/tools.py`：12个mock工具及真实格式JSON Schema。
-- `data/orders.json`：三个合成订单，固定业务时间，不依赖当天日期。
+- `materials/orders.json`：三个合成订单，固定业务时间，不依赖当天日期。
 - `order_agent/client.py`：离线脚本与真实API客户端。
 - `order_agent/analyze.py`：逐次context的内容体积与API实际usage。字符数不是token数；usage不可用时保留null。工具内容可由tool_call_id追溯来源，尚未实现精确分段token归因。
 
@@ -61,25 +65,54 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 配置文件中的`mock.model_delay_seconds`与`mock.tool_delay_seconds`分别设置随机等待区间（秒），默认模型0.3–0.9秒、工具0.05–0.2秒。等待发生在实际mock调用内，由logging与session history记录实际经过时间；这只是教学模拟，不是GPU性能数据。设置为`[0, 0]`可关闭等待。APIClient不会插入模型延迟；当前业务工具仍是mock。
 
-第 1 课用预先录制的日志对照初始服务日志和完整会话。样例及运行来源见[第 1 课](lessons/lesson-01/README.md)。
-
-## 课 4 · 优化前与参考实现
-
-学员在 `main` 分支从优化前版本开始。`lesson4-optimized` 分支提供优化后的参考实现。切换方式、运行入口和结果见[第 4 课实操](lesson4/README.md)。
+第 1 课用预先录制的日志对照初始服务日志和完整会话。学员练习用[完整会话 JSON](materials/session-history.json)。
 
 ## 课 3 · 测量和调整 vLLM
 
-`lesson3/` 目录附 20 条合成订单请求、CPU 启动配置和 vLLM 测试入口。请在课程准备好的 Linux CPU 主机上运行，两个终端使用同一个 vLLM 环境。
+`materials/` 目录附 20 条合成订单请求、CPU 启动配置和 vLLM 测试入口。请在课程准备好的 Linux CPU 主机上运行，两个终端使用同一个 vLLM 环境。
 
 1. 在项目目录启动服务。若使用预置模型，先将 YAML 的 `model` 改成模型目录，保留 `served-model-name`。
    ```sh
-   VLLM_CPU_KVCACHE_SPACE=1 vllm serve --config lesson3/serve-demo.yaml
+   VLLM_CPU_KVCACHE_SPACE=1 vllm serve --config materials/serve-demo.yaml
    ```
 2. 保持服务运行，在同一台机器另开终端，回到项目目录跑基线。如果使用本地模型目录，先在第二个终端执行 `export LAB_MODEL=/path/to/model`，与 YAML 中的 `model` 一致。
    ```sh
-   bash lesson3/bench.sh baseline
+   bash materials/bench.sh baseline
    ```
-3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 ITL、P95 E2EL（毫秒）。JSON 报告在 `lesson3/results/`。
-4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `bash lesson3/bench.sh candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
+3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 ITL、P95 E2EL（毫秒）。JSON 报告在 `materials/results/`。
+4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `bash materials/bench.sh candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
 
 客户端固定最多 4 条并发、同一批输入和 32 个输出 token 的上限，方便观察服务端调参的影响。20 条请求的结果用于课堂比较，无法代表生产容量。样本只访问模型 API，无需启动订单助手或业务工具。
+
+## 练习 8 · Agent 优化
+
+发给 WorkBuddy 的任务：
+
+> 请用同样的 A1024、A1025、A1026 跑优化前后两版，保留 JSONL。选择一项减少调用和一项减少单次用量的改动。逐单给出模型调用次数，再汇总整单输入和输出 Token。A1024 核对预计送达日，A1025 核对未出库，A1026 核对冲突升级。
+
+每次发出模型请求计一次，回退的模型调用单独计入。逐次汇总输入和输出 Token，输入包含缓存命中部分。API 用实际 usage。Mock 用第 2 课同一 Qwen 聊天模板和分词器复算请求，对模型输出（含工具调用）离线分词，并标注为离线估算。
+
+### 参考实现
+
+参考实现位于 `lesson4-optimized` 分支。课堂讲评可另开一个工作目录，保留学员当前修改。
+
+```sh
+git worktree add ../fde-xiaozhi-order-agent-reference lesson4-optimized
+cd ../fde-xiaozhi-order-agent-reference
+```
+
+在参考实现目录运行：
+
+```sh
+python3 -m order_agent.app --config config/optimized.json --order A1024
+python3 -m order_agent.web --config config/optimized.json --port 8081
+python3 -m materials.compare
+```
+
+- `config/local.json` 默认运行基线，`config/optimized.json` 打开参考优化。两份配置都使用 Mock。
+- `order_agent/optimization.py` 中，应用先查订单，并用返回的运单号取初始物流。模型在一次响应里提出独立查询。政策正文保留 ID 和正文，原始工具结果继续写入日志。
+- 固定系统指令在前，业务日期随订单上下文发送。准备好证据后，末次请求清空工具并按四项要求答复。A1024 的简单答复用 Flash，复杂情况用 GLM-5.3。Flash 缺关键事实时退回 GLM-5.3。
+- `python3 -m materials.compare` 对两版使用同一旗舰模型标识作为取证基线。它保留两个流程的调用、请求字符数、末轮工具数和答复对照。输入字符数不是 Token 数。缓存命中、账单和真实模型质量需要在线复测。
+- 若有合适的 API，在 `config/` 下复制 `optimized.json`，将新配置的 `llm.backend` 改成 `api`，并通过 `LLM_API_KEY` 提供凭证。再复制一份 API 配置并删除 `agent.optimization` 作为在线基线。两版用同一模型端点和价目。清空工具的请求带历史工具消息，先验证服务端兼容性。
+
+在参考分支安装 `tokenizers` 和 `jinja2` 后，运行 `python3 -m materials.measure_span_tokens`，用随项目提供的 Qwen 分词器复算三笔样例的模型调用次数、输入 Token 和输出 Token。
