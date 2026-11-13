@@ -2624,5 +2624,13 @@
       "event": "task_end",
       "status": "completed"
     }
-  ]
+  ],
+  "summary": {
+    "status": "completed",
+    "model_calls": 7,
+    "input_tokens": 12325,
+    "output_tokens": 380,
+    "token_source": "classroom_simulated_usage",
+    "calls_missing_token_counts": 0
+  }
 }

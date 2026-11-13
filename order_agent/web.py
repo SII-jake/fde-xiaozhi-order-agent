@@ -9,6 +9,7 @@ from .mock_latency import configure as configure_mock_latency
 from .client import MockClient, APIClient
 from .config import load_config, DEFAULT_CONFIG
 from .tools import ORDERS
+from .trajectory import default_path, write_trajectory
 
 PAGE = Path(__file__).with_name('web.html')
 
@@ -53,8 +54,14 @@ def main():
                 path = Path(config['tracing']['directory']) / (str(uuid.uuid4()) + '.jsonl')
                 client = MockClient(order, optimized=bool(config['agent'].get('optimization'))) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
                 tool_events = []
-                answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append, optimization=config['agent'].get('optimization'))
-                self.send(200, {'answer': answer, 'tools': tool_events, 'trace': path.name if path.exists() else None})
+                trajectory = default_path(path)
+                try:
+                    answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append, optimization=config['agent'].get('optimization'))
+                finally:
+                    if path.exists():
+                        write_trajectory(path, trajectory)
+
+                self.send(200, {'answer': answer, 'tools': tool_events, 'trace': path.name, 'trajectory': trajectory.name})
             except ValueError as exc:
                 self.send(400, {'error': str(exc)})
             except Exception:
