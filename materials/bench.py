@@ -11,6 +11,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 MATERIALS = Path(__file__).resolve().parent
+DEFAULT_CONFIG = MATERIALS.parent / "config/bench.json"
 
 
 def positive_int(value):
@@ -76,10 +77,10 @@ def measure(prompt, args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("name", help="报告名称，例如 baseline 或 candidate")
-    parser.add_argument("--base-url", default=os.getenv("LAB_BASE_URL", "http://127.0.0.1:8000/v1"))
-    parser.add_argument("--model", default=os.getenv("LAB_MODEL", "order-demo-0.6b"),
-                        help="服务端 API 接受的模型名")
+    parser.add_argument("name", nargs="?", default="baseline", help="报告名称，默认 baseline")
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help="测试目标配置文件")
+    parser.add_argument("--base-url", help="覆盖配置中的接口地址，包含 /v1")
+    parser.add_argument("--model", help="覆盖配置中的 API 模型名")
     parser.add_argument("--dataset", type=Path, default=MATERIALS / "requests.jsonl")
     parser.add_argument("--concurrency", type=positive_int, default=4)
     parser.add_argument("--max-tokens", type=positive_int, default=32)
@@ -87,6 +88,16 @@ def main():
     parser.add_argument("--disable-thinking", action="store_true",
                         help="仅在支持 chat_template_kwargs 的 Qwen 服务上使用")
     args = parser.parse_args()
+    try:
+        config = json.loads(args.config.read_text(encoding="utf-8"))
+        args.base_url = args.base_url or os.getenv("LAB_BASE_URL") or config["base_url"]
+        args.model = args.model or os.getenv("LAB_MODEL") or config["model"]
+        if not isinstance(args.base_url, str) or not args.base_url.startswith(("http://", "https://")):
+            raise ValueError("base_url 必须为 HTTP(S) 接口地址")
+        if not isinstance(args.model, str) or not args.model.strip():
+            raise ValueError("model 必须为服务端 API 接受的模型名")
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        parser.error(f"配置读取失败（{args.config}）：{exc}")
     if not args.name.isascii() or not args.name.replace("-", "").replace("_", "").isalnum():
         parser.error("报告名称只能使用英文字母、数字、下划线和连字符")
     destination = MATERIALS / "results" / f"{args.name}.json"

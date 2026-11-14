@@ -15,7 +15,7 @@
 | 7. 计算整单 API 费用 | 用课件费率计算逐次费用、整单费用和输入全命中时的理论费用。 | 沿用练习 1 的 JSON，读取各次响应的 `usage` |
 | 8. 用 WorkBuddy 优化订单调查助手 | 按课堂方法优化 Demo，提交优化后的模型调用次数、输入 Token 数和输出 Token 数。 | `lesson4-optimized` 分支 |
 
-练习 5 从项目根目录运行 `python3 materials/bench.py baseline`。练习 8 从 `main` 分支出发，讲评时切到 `lesson4-optimized` 分支的工作目录，再运行 `python3 -m order_agent.app --config config/optimized.json --order A1024` 对照参考实现。
+练习 5 先修改 [压测配置](config/bench.json)，再从项目根目录运行 `python3 materials/bench.py`。练习 8 从 `main` 分支出发，讲评时切到 `lesson4-optimized` 分支的工作目录，再运行 `python3 -m order_agent.app --config config/optimized.json --order A1024` 对照参考实现。
 
 ## 浏览器应用
 
@@ -75,11 +75,11 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
    ```sh
    VLLM_CPU_KVCACHE_SPACE=1 vllm serve --config materials/serve-demo.yaml
    ```
-2. 保持服务运行，在同一台机器另开终端，回到项目目录跑基线。
+2. 保持 CPU 服务运行。修改 `config/bench.json`，把 `base_url` 指向你部署的接口（包含 `/v1`），把 `model` 填为服务端对外的模型名（`served-model-name`）。然后回到项目根目录运行：
    ```sh
-   python3 materials/bench.py baseline
+   python3 materials/bench.py
    ```
-3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 流式片段间隔、P95 E2EL（毫秒）。JSON 报告在 `materials/results/`。
+3. 抄下成功数与失败数，用成功数除以两者之和。再记录 Request throughput（条／秒）、P95 TTFT、P95 流式片段间隔、P95 E2EL（毫秒）。首次运行默认写入 `materials/results/baseline.json`。再次运行可额外指定报告名，已有报告会保留。
 4. 调参练习。保留基线报告，复制启动 YAML，把 `max-num-seqs` 从 2 改成 4。停掉旧服务，以新配置启动同一个模型，再运行 `python3 materials/bench.py candidate`。对照吞吐、成功率和三项 P95，给出保留或回退的理由。若服务启动失败，恢复原配置并记录原因。重跑时用新的报告名。
 
 客户端固定最多 4 条并发、`requests.jsonl` 里的 20 条合成订单提示词和 32 个输出 Token 的上限，方便观察服务端调参的影响。脚本只用 Python 标准库。TTFT 按首个可见文本片段计时。单个流式片段可能包含多个 Token，片段间隔用 `p95_chunk_gap_ms` 报告。20 条请求的结果用于课堂比较，无法代表生产容量。样本只访问模型 API，无需启动订单助手或业务工具。
