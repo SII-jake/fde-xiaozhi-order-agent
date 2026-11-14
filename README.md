@@ -65,7 +65,7 @@ API密钥通过环境变量LLM_API_KEY提供，不写入trace。模型端点必�
 
 配置文件中的`mock.model_delay_seconds`与`mock.tool_delay_seconds`分别设置随机等待区间（秒），默认模型0.3–0.9秒、工具0.05–0.2秒。等待发生在实际mock调用内，由logging与session history记录实际经过时间；这只是教学模拟，不是GPU性能数据。设置为`[0, 0]`可关闭等待。APIClient不会插入模型延迟；当前业务工具仍是mock。
 
-[完整会话 JSON](materials/session-trajectory.json)来自订单助手实际运行 Mock 后端的记录，随项目发放的 JSON 只在响应的 `usage` 中补了模拟用量，供第 1、7 项练习使用。接真实模型时读取服务实际返回的用量。
+[完整会话 JSON](materials/session-trajectory.json)来自订单助手实际运行 Mock 后端的记录，运行时自动把估算用量写入响应的 `usage`，供第 1、7 项练习使用。接真实模型时读取服务实际返回的用量。
 
 ## 课 3 · 测量和调整 vLLM
 
@@ -123,8 +123,28 @@ python3 -m materials.compare
 
 - `config/local.json` 默认运行基线，`config/optimized.json` 打开参考优化。两份配置都使用 Mock。
 - `order_agent/optimization.py` 中，应用先查订单，并用返回的运单号取初始物流。模型在一次响应里提出独立查询。政策正文保留 ID 和正文，原始工具结果继续写入日志。
-- 固定系统指令在前，业务日期随订单上下文发送。准备好证据后，末次请求清空工具并按四项要求答复。A1024 的简单答复用 Flash，复杂情况用 GLM-5.3。Flash 缺关键事实时退回 GLM-5.3。
+- 固定系统指令在前，业务日期随订单上下文发送。准备好证据后，末次请求清空工具并按四项要求答复。课堂参考配置全程使用相同的 Qwen3-235B-A22B 模型标识。
 - `python3 -m materials.compare` 对两版使用同一旗舰模型标识作为取证基线。它保留两个流程的调用、请求字符数、末轮工具数和答复对照。输入字符数不是 Token 数。缓存命中、账单和真实模型质量需要在线复测。
 - 若有合适的 API，在 `config/` 下复制 `optimized.json`，将新配置的 `llm.backend` 改成 `api`，并通过 `LLM_API_KEY` 提供凭证。再复制一份 API 配置并删除 `agent.optimization` 作为在线基线。两版用同一模型端点和价目。清空工具的请求带历史工具消息，先验证服务端兼容性。
 
-参考分支保留 Qwen 分词器供离线复算。在该分支安装 `tokenizers` 和 `jinja2` 后，运行 `python3 -m materials.measure_span_tokens`，用随项目提供的 Qwen 分词器复算三笔样例的模型调用次数、输入 Token 和输出 Token。
+参考分支保留 Qwen 分词器供离线复算。在该分支安装 `tokenizers` 和 `jinja2` 后，运行 `python3 -m materials.measure_step_tokens`，用随项目提供的 Qwen 分词器复算三笔样例的模型调用次数、输入 Token 和输出 Token。
+
+
+### 会话、交互轮次与执行步骤
+
+`task_id` 标识本次演示会话，`turn` 为用户发起的交互轮次。一笔订单从提问到最终答复是一轮；每次模型或工具执行使用 `step_id` 标识，`model_call_index` 表示该轮内第几次模型调用。同一次模型调用的请求与响应共享同一个步骤 ID。
+
+- [政策原文件](materials/order-delay-policy.md)由 `get_policy_document` 原样读出。参考实现保留完整工具结果用于诊断，只把政策编号和正文发送给模型。
+- [同一订单的第二次基线回放](materials/session-trajectory-later.json)通过 `--processing-time "2026-10-30 14:40"` 生成，与第一次回放对比首条请求的 System 前缀。
+- 这些轨迹运行的是 Mock，使用 Qwen3-235B-A22B 的模型标识。用量按序列化长度估算，缓存栏模拟 128 Token 块的前缀复用。实际服务的 Token 计数、缓存命中与费用以服务返回值为准。
+
+从基线配置复现第 4 课的单项对照：
+
+```sh
+python3 -m order_agent.app --config config/local.json --order A1024 --trim-policy --trajectory traces/a1024-trimmed.json
+python3 -m order_agent.app --config config/local.json --order A1024 --trim-policy --compact-reply --trajectory traces/a1024-compact.json
+python3 -m order_agent.app --config config/local.json --order A1024 --stable-prefix --trajectory traces/a1024-stable.json
+python3 -m order_agent.app --config config/local.json --order A1024 --stable-prefix --processing-time "2026-10-30 14:40" --trajectory traces/a1024-stable-later.json
+```
+
+对照文件也在 `materials/`。精简政策比较第 6、7 次请求，四项答复比较第 7 次响应，前缀比较两次会话的第 1 次请求。

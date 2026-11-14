@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def measure(order, config, path):
     optimization = config["agent"].get("optimization")
     answer = run(
-        MockClient(order, optimized=bool(optimization)), order, path, model=config["llm"]["model"],
+        MockClient(order, optimized=optimization is not None), order, path, model=config["llm"]["model"],
         optimization=optimization,
     )
     events = [json.loads(line) for line in path.read_text().splitlines()]
@@ -29,7 +29,7 @@ def measure(order, config, path):
         ),
         "answer_chars": len(answer),
         "first_tool_names": [
-            e["name"] for e in events if e["event"] == "tool_execution" and e["turn"] == 1
+            e["name"] for e in events if e["event"] == "tool_execution" and e["model_call_index"] == 1
         ],
         "prefetched": any(e["event"] == "application_prefetch" for e in events),
         "final_tools": len(requests[-1]["tools"]),

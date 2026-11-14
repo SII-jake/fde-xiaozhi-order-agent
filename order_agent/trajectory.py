@@ -19,6 +19,30 @@ def estimate_tokens(value):
     return (len(json.dumps(value, ensure_ascii=False).encode("utf-8")) + 3) // 4
 
 
+def estimate_usage(request, message, previous_request=None):
+    """Simulate classroom usage. Prefix matches approximate cacheable blocks."""
+    def serialized(payload):
+        return json.dumps({"tools": payload.get("tools", []), "messages": payload["messages"]},
+                          ensure_ascii=False).encode("utf-8")
+
+    current = serialized(request)
+    prompt = (len(current) + 3) // 4
+    completion = estimate_tokens(message)
+    hit = 0
+    if previous_request is not None:
+        prefix = 0
+        for old, new in zip(serialized(previous_request), current):
+            if old != new:
+                break
+            prefix += 1
+        hit = (prefix // (4 * 128)) * 128
+    return {
+        "prompt_tokens": prompt, "completion_tokens": completion,
+        "prompt_cache_hit_tokens": hit, "prompt_cache_miss_tokens": prompt - hit,
+        "total_tokens": prompt + completion,
+    }
+
+
 def summarize_trajectory(events):
     requests = [event for event in events if event["event"] == "llm_request"]
     responses = {
@@ -34,7 +58,10 @@ def summarize_trajectory(events):
             missing += 1
             continue
         recorded = response.get("usage")
-        if response.get("teaching_mock"):
+        if response.get("usage_source") == "mock_estimate":
+            source = "mock_utf8_estimate"
+            counts = (recorded["prompt_tokens"], recorded["completion_tokens"])
+        elif response.get("teaching_mock"):
             source = "mock_utf8_estimate"
             request = event["request"]
             counts = (
@@ -54,6 +81,9 @@ def summarize_trajectory(events):
     return {
         "status": status,
         "model_calls": len(requests),
+        "step_count": len(requests) + sum(
+            event["event"] in {"tool_execution", "application_prefetch"} for event in events
+        ),
         "input_tokens": usage["input_tokens"] if comparable else None,
         "output_tokens": usage["output_tokens"] if comparable else None,
         "token_source": next(iter(sources)) if comparable else None,

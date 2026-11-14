@@ -3,7 +3,7 @@
 import json
 from datetime import date
 
-from .tools import execute
+from .tools import execute, policy_for_model
 
 
 class OptimizedInvestigation:
@@ -50,7 +50,7 @@ class OptimizedInvestigation:
             required.add("get_tracking")
         if not required <= self.completed:
             return "读取检索到的政策正文。已有运单号时，在同一次响应中复查物流。"
-        return "证据已齐备。按结论、预计时间、建议、政策依据四项简洁答复。"
+        return "按结论与证据、预计时间、下一步、政策依据答复，每项最多一句。"
 
     @property
     def ready_to_answer(self):
@@ -64,7 +64,7 @@ class OptimizedInvestigation:
         # Request messages are copied by the loop, so this phase instruction only lives here.
         if self.ready_to_answer or self.tool_failed:
             request["tools"] = []
-            if self.ready_to_answer and not self.conflict and not self.retried_with_strong_model and self.kind == "delayed" and self.estimated_date:
+            if self.models.get("simple") and self.ready_to_answer and not self.conflict and not self.retried_with_strong_model and self.kind == "delayed" and self.estimated_date:
                 request["model"] = self.models["simple"]
         return request
 
@@ -77,12 +77,12 @@ class OptimizedInvestigation:
             self.tool_failed = True
 
     def for_model(self, name, result):
-        if name == "get_policy_document" and {"id", "text"} <= result.keys():
-            return {key: result[key] for key in ("id", "text")}
+        if name == "get_policy_document" and isinstance(result, str):
+            return policy_for_model(result)
         return result
 
     def should_retry(self, request, message, finish_reason):
-        if request["model"] != self.models["simple"] or self.retried_with_strong_model:
+        if request["model"] != self.models.get("simple") or self.retried_with_strong_model:
             return False
         content = message.get("content") or ""
         estimated = date.fromisoformat(self.estimated_date)
@@ -90,12 +90,12 @@ class OptimizedInvestigation:
         compact = content.replace(" ", "")
         if (
             finish_reason == "stop"
-            and all(field in content for field in ("结论", "预计时间", "建议", "政策依据"))
+            and all(field in content for field in ("结论", "预计时间", "下一步", "政策依据"))
             and any(value in compact for value in date_formats)
             and any(value in compact for value in ("非保证", "不保证", "仅供参考"))
             and "联系承运商" in compact
             and "中转站延误" in compact
-            and any(value in compact for value in ("暂不承诺补偿", "尚未达到补偿", "不承诺补偿"))
+            and "超过三天" in compact
         ):
             return False
         self.retried_with_strong_model = True

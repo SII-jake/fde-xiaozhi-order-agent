@@ -52,11 +52,11 @@ def main():
                     raise ValueError('Unknown order')
                 llm = config['llm']
                 path = Path(config['tracing']['directory']) / (str(uuid.uuid4()) + '.jsonl')
-                client = MockClient(order, optimized=bool(config['agent'].get('optimization'))) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
+                client = MockClient(order, optimized=config['agent'].get('optimization') is not None) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
                 tool_events = []
                 trajectory = default_path(path)
                 try:
-                    answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append, optimization=config['agent'].get('optimization'))
+                    answer = run(client, order, path, llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append, optimization=config['agent'].get('optimization'))
                 finally:
                     if path.exists():
                         write_trajectory(path, trajectory)

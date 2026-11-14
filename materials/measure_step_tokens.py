@@ -1,4 +1,4 @@
-"""Compare execution spans and offline Qwen token counts for the lesson 4 demo."""
+"""Compare execution steps and offline Qwen token counts for the lesson 4 demo."""
 
 import json
 from pathlib import Path
@@ -20,7 +20,7 @@ TOKENIZER_DIR = ROOT / "materials"
 def measure(order, trace, config, encode):
     optimization = config["agent"].get("optimization")
     run(
-        MockClient(order, optimized=bool(optimization)),
+        MockClient(order, optimized=optimization is not None),
         order,
         trace,
         model=config["llm"]["model"],
@@ -42,7 +42,7 @@ def measure(order, trace, config, encode):
     )
     assistant_header = len(encode([{"role": "assistant", "content": ""}])) - 2
     return {
-        "span_count": len(requests) + tools,
+        "step_count": len(requests) + tools,
         "model_calls": len(requests),
         "tool_calls": tools,
         "input_tokens": sum(

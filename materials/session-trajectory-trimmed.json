@@ -1,0 +1,2644 @@
+{
+  "summary": {
+    "status": "completed",
+    "model_calls": 7,
+    "step_count": 13,
+    "input_tokens": 8459,
+    "output_tokens": 433,
+    "token_source": "mock_utf8_estimate",
+    "calls_missing_token_counts": 0
+  },
+  "events": [
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "f433595d-88c4-481c-9ac8-e4b210802c49",
+      "turn": 1,
+      "step_id": "f433595d-88c4-481c-9ac8-e4b210802c49",
+      "model_call_index": 1,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649287.5547688,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "f433595d-88c4-481c-9ac8-e4b210802c49",
+      "turn": 1,
+      "step_id": "f433595d-88c4-481c-9ac8-e4b210802c49",
+      "model_call_index": 1,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649288.1082728,
+      "elapsed_seconds": 0.5534969170112163,
+      "response": {
+        "id": "mock-1",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-0",
+                  "type": "function",
+                  "function": {
+                    "name": "get_order",
+                    "arguments": "{\"order_id\": \"A1024\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 862,
+          "completion_tokens": 43,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 862,
+          "total_tokens": 905
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "f433595d-88c4-481c-9ac8-e4b210802c49",
+      "turn": 1,
+      "step_id": "tool-0",
+      "model_call_index": 1,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-0",
+      "name": "get_order",
+      "arguments": "{\"order_id\": \"A1024\"}",
+      "result": {
+        "order_id": "A1024",
+        "customer_id": "C001",
+        "tracking_number": "TA1024",
+        "promised_date": "2026-10-28",
+        "as_of": "2026-10-29",
+        "kind": "delayed",
+        "status": "in_transit",
+        "evidence_conflict": false
+      },
+      "status": "ok",
+      "started_at": 1794649288.109515,
+      "elapsed_seconds": 0.14827487495495006
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "a243c5a5-4ea1-4c04-a812-56e5db933eb0",
+      "turn": 1,
+      "step_id": "a243c5a5-4ea1-4c04-a812-56e5db933eb0",
+      "model_call_index": 2,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649288.2595358,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "a243c5a5-4ea1-4c04-a812-56e5db933eb0",
+      "turn": 1,
+      "step_id": "a243c5a5-4ea1-4c04-a812-56e5db933eb0",
+      "model_call_index": 2,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649289.113614,
+      "elapsed_seconds": 0.8540656249970198,
+      "response": {
+        "id": "mock-2",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-1",
+                  "type": "function",
+                  "function": {
+                    "name": "get_warehouse_events",
+                    "arguments": "{\"order_id\": \"A1024\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 976,
+          "completion_tokens": 45,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 208,
+          "total_tokens": 1021
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "a243c5a5-4ea1-4c04-a812-56e5db933eb0",
+      "turn": 1,
+      "step_id": "tool-1",
+      "model_call_index": 2,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-1",
+      "name": "get_warehouse_events",
+      "arguments": "{\"order_id\": \"A1024\"}",
+      "result": [
+        {
+          "date": "2026-10-27",
+          "event": "handed_to_carrier"
+        }
+      ],
+      "status": "ok",
+      "started_at": 1794649289.115243,
+      "elapsed_seconds": 0.08590662496862933
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "71311463-470b-41f3-b984-51d2c2d6798e",
+      "turn": 1,
+      "step_id": "71311463-470b-41f3-b984-51d2c2d6798e",
+      "model_call_index": 3,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649289.2022111,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-1",
+                "type": "function",
+                "function": {
+                  "name": "get_warehouse_events",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-1",
+            "content": "[{\"date\": \"2026-10-27\", \"event\": \"handed_to_carrier\"}]"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "71311463-470b-41f3-b984-51d2c2d6798e",
+      "turn": 1,
+      "step_id": "71311463-470b-41f3-b984-51d2c2d6798e",
+      "model_call_index": 3,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649289.667504,
+      "elapsed_seconds": 0.4652837500325404,
+      "response": {
+        "id": "mock-3",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-2",
+                  "type": "function",
+                  "function": {
+                    "name": "get_tracking",
+                    "arguments": "{\"tracking_number\": \"TA1024\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1052,
+          "completion_tokens": 45,
+          "prompt_cache_hit_tokens": 896,
+          "prompt_cache_miss_tokens": 156,
+          "total_tokens": 1097
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "71311463-470b-41f3-b984-51d2c2d6798e",
+      "turn": 1,
+      "step_id": "tool-2",
+      "model_call_index": 3,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-2",
+      "name": "get_tracking",
+      "arguments": "{\"tracking_number\": \"TA1024\"}",
+      "result": {
+        "events": [
+          {
+            "date": "2026-10-28",
+            "event": "中转站延误",
+            "estimated_delivery": "2026-10-30"
+          }
+        ],
+        "evidence_conflict": false
+      },
+      "status": "ok",
+      "started_at": 1794649289.669499,
+      "elapsed_seconds": 0.09536245802883059
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "96ee4e0d-579f-4884-9a9e-025182059a84",
+      "turn": 1,
+      "step_id": "96ee4e0d-579f-4884-9a9e-025182059a84",
+      "model_call_index": 4,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649289.7660758,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-1",
+                "type": "function",
+                "function": {
+                  "name": "get_warehouse_events",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-1",
+            "content": "[{\"date\": \"2026-10-27\", \"event\": \"handed_to_carrier\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-2",
+                "type": "function",
+                "function": {
+                  "name": "get_tracking",
+                  "arguments": "{\"tracking_number\": \"TA1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-2",
+            "content": "{\"events\": [{\"date\": \"2026-10-28\", \"event\": \"中转站延误\", \"estimated_delivery\": \"2026-10-30\"}], \"evidence_conflict\": false}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "96ee4e0d-579f-4884-9a9e-025182059a84",
+      "turn": 1,
+      "step_id": "96ee4e0d-579f-4884-9a9e-025182059a84",
+      "model_call_index": 4,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649290.490409,
+      "elapsed_seconds": 0.724322916008532,
+      "response": {
+        "id": "mock-4",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-3",
+                  "type": "function",
+                  "function": {
+                    "name": "search_policy",
+                    "arguments": "{\"query\": \"订单延误\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1148,
+          "completion_tokens": 45,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 124,
+          "total_tokens": 1193
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "96ee4e0d-579f-4884-9a9e-025182059a84",
+      "turn": 1,
+      "step_id": "tool-3",
+      "model_call_index": 4,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-3",
+      "name": "search_policy",
+      "arguments": "{\"query\": \"订单延误\"}",
+      "result": {
+        "matches": [
+          {
+            "id": "P-DELAY",
+            "text": "晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。"
+          }
+        ]
+      },
+      "status": "ok",
+      "started_at": 1794649290.491699,
+      "elapsed_seconds": 0.19785125000635162
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "72690ec2-760c-4f9a-be46-9596b0809a03",
+      "turn": 1,
+      "step_id": "72690ec2-760c-4f9a-be46-9596b0809a03",
+      "model_call_index": 5,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649290.691266,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-1",
+                "type": "function",
+                "function": {
+                  "name": "get_warehouse_events",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-1",
+            "content": "[{\"date\": \"2026-10-27\", \"event\": \"handed_to_carrier\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-2",
+                "type": "function",
+                "function": {
+                  "name": "get_tracking",
+                  "arguments": "{\"tracking_number\": \"TA1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-2",
+            "content": "{\"events\": [{\"date\": \"2026-10-28\", \"event\": \"中转站延误\", \"estimated_delivery\": \"2026-10-30\"}], \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-3",
+                "type": "function",
+                "function": {
+                  "name": "search_policy",
+                  "arguments": "{\"query\": \"订单延误\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-3",
+            "content": "{\"matches\": [{\"id\": \"P-DELAY\", \"text\": \"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。\"}]}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "72690ec2-760c-4f9a-be46-9596b0809a03",
+      "turn": 1,
+      "step_id": "72690ec2-760c-4f9a-be46-9596b0809a03",
+      "model_call_index": 5,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649290.998972,
+      "elapsed_seconds": 0.30769858398707584,
+      "response": {
+        "id": "mock-5",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-4",
+                  "type": "function",
+                  "function": {
+                    "name": "get_policy_document",
+                    "arguments": "{\"policy_id\": \"P-DELAY\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1260,
+          "completion_tokens": 46,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 236,
+          "total_tokens": 1306
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "72690ec2-760c-4f9a-be46-9596b0809a03",
+      "turn": 1,
+      "step_id": "tool-4",
+      "model_call_index": 5,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-4",
+      "name": "get_policy_document",
+      "arguments": "{\"policy_id\": \"P-DELAY\"}",
+      "result": "# 订单延误处理指引\n\n**文件编号**：P-DELAY  \n**版本**：2026.10  \n**编制单位**：客户服务部 · 履约支持组  \n**适用对象**：一线客服、履约专员及现场主管  \n**分发范围**：客服知识库、仓库值班台、承运商联络岗  \n**生效日期**：2026 年 10 月 1 日\n\n---\n\n## 目录\n\n1. 正文\n2. 适用范围与证据核对\n3. 处理路径与客户沟通\n4. 补偿审核和人工升级\n5. 复查结果记录\n\n## 编制说明\n\n本指引由履约支持组起草，客服质量组与仓配协同组共同审阅。为便于不同渠道统一引用，知识库、培训手册与值班交接表使用相同的文件编号。线下打印件首页应保留版本日期，跨团队转发时随附目录。版本更新后由知识库管理员通知各区域值班主管，旧版转入档案目录。\n\n编制过程中对照了客服话术模板、履约事件说明和历史工单。各业务线可以把正文条款链接挂到工作台快捷入口；编辑手册时保留条款顺序，引用时使用完整标题。文档登记、校对、排版等信息用于内部维护与归档。\n\n## 正文\n\n### 适用范围与证据核对\n\n核对订单承诺送达日期、仓库交接记录与承运商轨迹。证据冲突或无法确认延误原因时，升级人工调查。\n\n### 处理路径与客户沟通\n\n晚于承诺日期的订单应按证据联系仓库或承运商。已交接且物流记录显示中转站滞留时，联系承运商跟进。转达预计送达时间时须注明该时间不能保证。\n\n### 补偿审核和人工升级\n\n超过承诺送达日期三天才进入补偿资格审核。进入审核流程不等于已批准补偿，客服不得提前承诺金额或结果。\n\n### 复查结果记录\n\n发送处理建议前复查物流。记录最新节点、预计送达信息及待跟进事项，并保留政策依据。\n",
+      "status": "ok",
+      "started_at": 1794649291.000555,
+      "elapsed_seconds": 0.09212400001706555
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "e624ab01-3421-40a6-9133-cd7b46b4efe6",
+      "turn": 1,
+      "step_id": "e624ab01-3421-40a6-9133-cd7b46b4efe6",
+      "model_call_index": 6,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649291.094526,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-1",
+                "type": "function",
+                "function": {
+                  "name": "get_warehouse_events",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-1",
+            "content": "[{\"date\": \"2026-10-27\", \"event\": \"handed_to_carrier\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-2",
+                "type": "function",
+                "function": {
+                  "name": "get_tracking",
+                  "arguments": "{\"tracking_number\": \"TA1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-2",
+            "content": "{\"events\": [{\"date\": \"2026-10-28\", \"event\": \"中转站延误\", \"estimated_delivery\": \"2026-10-30\"}], \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-3",
+                "type": "function",
+                "function": {
+                  "name": "search_policy",
+                  "arguments": "{\"query\": \"订单延误\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-3",
+            "content": "{\"matches\": [{\"id\": \"P-DELAY\", \"text\": \"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。\"}]}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-4",
+                "type": "function",
+                "function": {
+                  "name": "get_policy_document",
+                  "arguments": "{\"policy_id\": \"P-DELAY\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-4",
+            "content": "{\"id\": \"P-DELAY\", \"text\": \"### 适用范围与证据核对\\n\\n核对订单承诺送达日期、仓库交接记录与承运商轨迹。证据冲突或无法确认延误原因时，升级人工调查。\\n\\n### 处理路径与客户沟通\\n\\n晚于承诺日期的订单应按证据联系仓库或承运商。已交接且物流记录显示中转站滞留时，联系承运商跟进。转达预计送达时间时须注明该时间不能保证。\\n\\n### 补偿审核和人工升级\\n\\n超过承诺送达日期三天才进入补偿资格审核。进入审核流程不等于已批准补偿，客服不得提前承诺金额或结果。\\n\\n### 复查结果记录\\n\\n发送处理建议前复查物流。记录最新节点、预计送达信息及待跟进事项，并保留政策依据。\"}"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "e624ab01-3421-40a6-9133-cd7b46b4efe6",
+      "turn": 1,
+      "step_id": "e624ab01-3421-40a6-9133-cd7b46b4efe6",
+      "model_call_index": 6,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649291.838689,
+      "elapsed_seconds": 0.7441514590173028,
+      "response": {
+        "id": "mock-6",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "tool-5",
+                  "type": "function",
+                  "function": {
+                    "name": "get_tracking",
+                    "arguments": "{\"tracking_number\": \"TA1024\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1520,
+          "completion_tokens": 45,
+          "prompt_cache_hit_tokens": 1152,
+          "prompt_cache_miss_tokens": 368,
+          "total_tokens": 1565
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "e624ab01-3421-40a6-9133-cd7b46b4efe6",
+      "turn": 1,
+      "step_id": "tool-5",
+      "model_call_index": 6,
+      "attempt": 1,
+      "event": "tool_execution",
+      "tool_call_id": "tool-5",
+      "name": "get_tracking",
+      "arguments": "{\"tracking_number\": \"TA1024\"}",
+      "result": {
+        "events": [
+          {
+            "date": "2026-10-28",
+            "event": "中转站延误",
+            "estimated_delivery": "2026-10-30"
+          }
+        ],
+        "evidence_conflict": false
+      },
+      "status": "ok",
+      "started_at": 1794649291.840331,
+      "elapsed_seconds": 0.1984167080372572
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "turn": 1,
+      "step_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "model_call_index": 7,
+      "attempt": 1,
+      "event": "llm_request",
+      "started_at": 1794649292.039982,
+      "request": {
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "messages": [
+          {
+            "role": "system",
+            "content": "当前时间：2026-10-29 09:15。\n你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+          },
+          {
+            "role": "user",
+            "content": "订单A1024应该昨天到货，现在还没收到。请调查并建议下一步。"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-0",
+                "type": "function",
+                "function": {
+                  "name": "get_order",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-0",
+            "content": "{\"order_id\": \"A1024\", \"customer_id\": \"C001\", \"tracking_number\": \"TA1024\", \"promised_date\": \"2026-10-28\", \"as_of\": \"2026-10-29\", \"kind\": \"delayed\", \"status\": \"in_transit\", \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-1",
+                "type": "function",
+                "function": {
+                  "name": "get_warehouse_events",
+                  "arguments": "{\"order_id\": \"A1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-1",
+            "content": "[{\"date\": \"2026-10-27\", \"event\": \"handed_to_carrier\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-2",
+                "type": "function",
+                "function": {
+                  "name": "get_tracking",
+                  "arguments": "{\"tracking_number\": \"TA1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-2",
+            "content": "{\"events\": [{\"date\": \"2026-10-28\", \"event\": \"中转站延误\", \"estimated_delivery\": \"2026-10-30\"}], \"evidence_conflict\": false}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-3",
+                "type": "function",
+                "function": {
+                  "name": "search_policy",
+                  "arguments": "{\"query\": \"订单延误\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-3",
+            "content": "{\"matches\": [{\"id\": \"P-DELAY\", \"text\": \"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。\"}]}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-4",
+                "type": "function",
+                "function": {
+                  "name": "get_policy_document",
+                  "arguments": "{\"policy_id\": \"P-DELAY\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-4",
+            "content": "{\"id\": \"P-DELAY\", \"text\": \"### 适用范围与证据核对\\n\\n核对订单承诺送达日期、仓库交接记录与承运商轨迹。证据冲突或无法确认延误原因时，升级人工调查。\\n\\n### 处理路径与客户沟通\\n\\n晚于承诺日期的订单应按证据联系仓库或承运商。已交接且物流记录显示中转站滞留时，联系承运商跟进。转达预计送达时间时须注明该时间不能保证。\\n\\n### 补偿审核和人工升级\\n\\n超过承诺送达日期三天才进入补偿资格审核。进入审核流程不等于已批准补偿，客服不得提前承诺金额或结果。\\n\\n### 复查结果记录\\n\\n发送处理建议前复查物流。记录最新节点、预计送达信息及待跟进事项，并保留政策依据。\"}"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "tool-5",
+                "type": "function",
+                "function": {
+                  "name": "get_tracking",
+                  "arguments": "{\"tracking_number\": \"TA1024\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "tool-5",
+            "content": "{\"events\": [{\"date\": \"2026-10-28\", \"event\": \"中转站延误\", \"estimated_delivery\": \"2026-10-30\"}], \"evidence_conflict\": false}"
+          },
+          {
+            "role": "user",
+            "content": "请详细说明调查过程、所有核查结果和处理建议。"
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order",
+              "description": "查询订单详情",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_order_items",
+              "description": "查询商品明细",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_profile",
+              "description": "查询客户资料和会员等级",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_customer_order_history",
+              "description": "查询客户历史订单",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "customer_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customer_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_warehouse_events",
+              "description": "查询仓库及交接事件",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_tracking",
+              "description": "查询物流轨迹",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tracking_number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tracking_number"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_carrier_notices",
+              "description": "查询区域物流公告",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_support_history",
+              "description": "查询订单客服记录",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_policy",
+              "description": "搜索政策片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_policy_document",
+              "description": "读取完整政策",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "policy_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "policy_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "check_compensation_eligibility",
+              "description": "检查补偿资格",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_escalation_draft",
+              "description": "创建待人工确认的工单草稿，不提交",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "temperature": 0,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "turn": 1,
+      "step_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "model_call_index": 7,
+      "attempt": 1,
+      "event": "llm_response",
+      "finished_at": 1794649292.886925,
+      "elapsed_seconds": 0.8469310830114409,
+      "response": {
+        "id": "mock-7",
+        "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "choices": [
+          {
+            "message": {
+              "role": "assistant",
+              "content": "我先查了订单 A1024，确认承诺送达日期为 10 月 28 日，关联运单是 TA1024。接着核查仓库记录，看到仓库已于 10 月 27 日交接给承运商。第一次查物流时，轨迹显示包裹在中转站发生延误，预计 10 月 30 日送达。随后我检索并阅读《订单延误处理指引》，确认延误超过三天才进入补偿资格审核。最后我复查了同一个运单，最新节点和预计日期没有变化。综合以上记录，运输中转延误是当前原因。建议联系承运商跟进，10 月 30 日是预计日期，不能保证，暂不承诺补偿。"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1641,
+          "completion_tokens": 164,
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 233,
+          "total_tokens": 1805
+        },
+        "teaching_mock": true,
+        "usage_source": "mock_estimate"
+      },
+      "status": "ok"
+    },
+    {
+      "task_id": "6cb3f9c2-24b1-4992-acfe-caf4dfcbe858",
+      "call_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "turn": 1,
+      "step_id": "69b972fa-db46-496f-8f73-997e5f48e0ab",
+      "model_call_index": 7,
+      "attempt": 1,
+      "event": "task_end",
+      "status": "completed"
+    }
+  ]
+}

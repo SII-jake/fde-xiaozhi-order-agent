@@ -4,6 +4,17 @@ from pathlib import Path
 from .mock_latency import simulate_latency
 ORDERS = json.loads((Path(__file__).resolve().parents[1]/"materials/orders.json").read_text())
 POLICY = {"id":"P-DELAY", "text":"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。"}
+POLICY_DOCUMENT = Path(__file__).resolve().parents[1] / "materials/order-delay-policy.md"
+
+
+def policy_for_model(document):
+    """Keep the policy ID and body when forwarding the document to the model."""
+    _, separator, body = document.partition("\n## 正文\n")
+    if not separator:
+        return document
+    return {"id": POLICY["id"], "text": body.strip()}
+
+
 SPECS = {
  "get_order":("查询订单详情", "order_id"),
  "get_order_items":("查询商品明细", "order_id"),
@@ -41,6 +52,6 @@ def execute(name,args):
  if name=='search_policy': return {'matches':[POLICY]}
  if name=='get_policy_document':
   if value!=POLICY['id']: raise ValueError('Unknown policy')
-  return {**POLICY,'appendix':['教学说明：其他业务条款，与当前物流问题无关。']*40}
+  return POLICY_DOCUMENT.read_text(encoding='utf-8')
  if name=='check_compensation_eligibility': return {'eligible':False,'reason':'案例延误一天，尚未达到超过三天的审核门槛','policy_id':POLICY['id']}
  return {'draft_id':'DRAFT-'+value,'status':'awaiting_human_confirmation','submitted':False}
