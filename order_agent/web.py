@@ -56,7 +56,7 @@ def main():
                 tool_events = []
                 trajectory = default_path(path)
                 try:
-                    answer = run(client, order, path, 'teaching-mock' if llm['backend'] == 'mock' else llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append)
+                    answer = run(client, order, path, llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append)
                 finally:
                     if path.exists():
                         write_trajectory(path, trajectory)

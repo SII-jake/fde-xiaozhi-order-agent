@@ -11,8 +11,8 @@ def summarize(path):
    role=m['role']; counts[role]=counts.get(role,0)+len(json.dumps(m,ensure_ascii=False))
   counts['tool_definitions']=len(json.dumps(req.get('tools',[]),ensure_ascii=False))
   response=next((x for x in events if x['event']=='llm_response' and x['call_id']==e['call_id']),None)
-  rows.append({'turn':e['turn'],'context_serialized_characters':counts,'usage':response['response'].get('usage') if response else None,'seconds':response.get('elapsed_seconds') if response else None})
- return {'note':'字符数用于内容观察，不是token数或GPU费用。mock不提供真实usage；工具历史仍可按工具调用ID追溯来源。','summary':summarize_trajectory(events),'calls':rows}
+  rows.append({'turn':e['turn'],'model_call_index':e.get('model_call_index',e['turn']),'step_id':e.get('step_id',e['call_id']),'context_serialized_characters':counts,'usage':response['response'].get('usage') if response else None,'seconds':response.get('elapsed_seconds') if response else None})
+ return {'note':'字符数用于内容观察，不是token数或GPU费用。Mock 的 usage 为估算；工具历史仍可按工具调用ID追溯来源。','summary':summarize_trajectory(events),'calls':rows}
 def main():
  p=argparse.ArgumentParser();p.add_argument('trace');a=p.parse_args();print(json.dumps(summarize(a.trace),ensure_ascii=False,indent=2))
 if __name__=='__main__': main()

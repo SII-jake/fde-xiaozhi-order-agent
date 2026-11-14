@@ -1,5 +1,3 @@
-"""Measure a streaming Chat Completions endpoint with a fixed classroom workload."""
-
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import json

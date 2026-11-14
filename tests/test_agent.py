@@ -13,7 +13,7 @@ class AgentTests(unittest.TestCase):
   self.sleep=sleeper.start(); self.addCleanup(sleeper.stop)
  def test_model_and_tool_simulate_waiting(self):
   with patch('order_agent.mock_latency.random.uniform', return_value=0.123) as uniform:
-   MockClient('A1024').complete({'model':'teaching-mock'})
+   MockClient('A1024').complete({'model':'mock-latency-test','messages':[]})
    execute('get_order', {'order_id':'A1024'})
   self.assertEqual(uniform.call_args_list[0].args, (0.3, 0.9))
   self.assertEqual(uniform.call_args_list[1].args, (0.05, 0.2))
@@ -33,7 +33,7 @@ class AgentTests(unittest.TestCase):
    self.assertEqual(sum(e['event']=='tool_execution' for e in events),6)
    self.assertTrue(any(m['role']=='tool' for m in requests[-1]['request']['messages']))
    self.assertEqual(len(summarize(p)['calls']),7)
-   self.assertIsNone(summarize(p)['calls'][0]['usage'])
+   self.assertGreater(summarize(p)['calls'][0]['usage']['prompt_tokens'], 0)
  def test_business_answer_and_browser_evidence(self):
   with tempfile.TemporaryDirectory() as d:
    evidence=[]
