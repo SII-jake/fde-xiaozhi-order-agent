@@ -20,9 +20,18 @@ class MockClient:
             'usage':estimate_usage(request,message,None),'teaching_mock':True,'usage_source':'mock_estimate'}
    self.order_id=orders[0]
   o=ORDERS[self.order_id]
-  steps=[('get_order',{'order_id':self.order_id}),('get_warehouse_events',{'order_id':self.order_id}),('get_tracking',{'tracking_number':o['tracking_number']}),('search_policy',{'query':'订单延误'}),('get_policy_document',{'policy_id':'P-DELAY'}),('get_tracking',{'tracking_number':o['tracking_number']})]
+  # 订单号与权限已确认：首次响应同时发出查订单和查仓库两条工具调用；
+  # 首次查物流等 get_order 结果带回运单号后进行；答复前复查物流。
+  steps=[
+   [('get_order',{'order_id':self.order_id}),('get_warehouse_events',{'order_id':self.order_id})],
+   [('get_tracking',{'tracking_number':o['tracking_number']})],
+   [('search_policy',{'query':'订单延误'})],
+   [('get_policy_document',{'policy_id':'P-DELAY'})],
+   [('get_tracking',{'tracking_number':o['tracking_number']})],
+  ]
   if self.step<len(steps):
-   n,a=steps[self.step]; message={'role':'assistant','content':None,'tool_calls':[{'id':'tool-'+str(self.step),'type':'function','function':{'name':n,'arguments':json.dumps(a,ensure_ascii=False)}}]}; reason='tool_calls'
+   batch=steps[self.step]
+   message={'role':'assistant','content':None,'tool_calls':[{'id':'tool-'+str(self.step)+'-'+str(index),'type':'function','function':{'name':name,'arguments':json.dumps(arguments,ensure_ascii=False)}} for index,(name,arguments) in enumerate(batch)]}; reason='tool_calls'
   else:
    answer={'delayed':'我先查了订单 A1024，确认承诺送达日期为 10 月 28 日，关联运单是 TA1024。接着核查仓库记录，看到仓库已于 10 月 27 日交接给承运商。第一次查物流时，轨迹显示包裹在中转站发生延误，预计 10 月 30 日送达。随后我检索并阅读《订单延误处理指引》，确认延误超过三天才进入补偿资格审核。最后我复查了同一个运单，最新节点和预计日期没有变化。综合以上记录，运输中转延误是当前原因。建议联系承运商跟进，10 月 30 日是预计日期，不能保证，暂不承诺补偿。','warehouse':'订单尚未交接承运商，应联系仓库调查，不应承诺物流送达时间。依据：订单和仓库记录。','conflicting':'现有证据存在冲突，无法可靠判断原因，应升级人工调查。依据：订单冲突标记和物流记录。'}[o['kind']]
    message={'role':'assistant','content':answer}; reason='stop'

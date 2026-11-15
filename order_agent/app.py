@@ -16,7 +16,7 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。根据用户问题确定订单号，订单号缺失或不明确时先请用户确认。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。根据用户问题确定订单号，订单号缺失或不明确时先请用户确认。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。订单号和权限已确认时，须在同一次响应中发出查订单和查仓库两条工具调用；首次查物流必须等查订单结果带回运单号之后才能进行；最终答复前须复查物流。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
@@ -35,7 +35,7 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
   call_id=str(uuid.uuid4()); started=time.time()
   call_started = time.perf_counter()
   request={'model':model,'messages':copy.deepcopy(messages),'tools':definitions(),'temperature':temperature,'max_tokens':max_tokens}
-  if step == 6 and isinstance(client, MockClient):
+  if step == 5 and isinstance(client, MockClient):
    request['messages'].append({'role':'user','content':DETAILED_REPLY})
   common={'task_id':task_id,'call_id':call_id,'turn':1,'step_id':call_id,'model_call_index':step+1,'attempt':1}
   history.write({

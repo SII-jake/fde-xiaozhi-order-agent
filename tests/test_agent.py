@@ -31,11 +31,24 @@ class AgentTests(unittest.TestCase):
    events=[json.loads(x) for x in p.read_text().splitlines()]
    self.assertIn('运输',answer)
    requests=[e for e in events if e['event']=='llm_request']
-   self.assertEqual(len(requests),7)
+   self.assertEqual(len(requests),6)
    self.assertEqual(sum(e['event']=='tool_execution' for e in events),6)
    self.assertTrue(any(m['role']=='tool' for m in requests[-1]['request']['messages']))
-   self.assertEqual(len(summarize(p)['calls']),7)
+   self.assertEqual(len(summarize(p)['calls']),6)
    self.assertGreater(summarize(p)['calls'][0]['usage']['prompt_tokens'], 0)
+ def test_parallel_order_and_warehouse_calls(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl';evidence=[]
+   answer=run(MockClient(),p,user_message=QUESTION,on_tool=evidence.append)
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   responses=[e for e in events if e['event']=='llm_response']
+   first_calls=responses[0]['response']['choices'][0]['message']['tool_calls']
+   self.assertEqual([c['function']['name'] for c in first_calls],['get_order','get_warehouse_events'])
+   self.assertNotEqual(first_calls[0]['id'],first_calls[1]['id'])
+   tracking=[e for e in evidence if e['name']=='get_tracking']
+   self.assertEqual(len(tracking),2)
+   self.assertEqual(evidence[0]['result']['tracking_number'],'TA1024')
+   self.assertIn('运输',answer)
  def test_business_answer_and_browser_evidence(self):
   with tempfile.TemporaryDirectory() as d:
    evidence=[]
