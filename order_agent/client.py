@@ -53,6 +53,10 @@ class MockClient:
   # 消息列表末尾；Mock 仅在该条用户消息出现在末尾时才给出最终答复。
   last=request['messages'][-1] if request['messages'] else {}
   if last.get('role')=='user' and last.get('content')==REPLY_REQUIREMENTS:
+   # 末次请求（只剩撰写最终答复）不提供任何工具；若仍携带工具，
+   # 说明应用的按阶段工具逻辑有问题，宁可报错也不静默放行。
+   if request.get('tools'):
+    raise RuntimeError('最终答复请求仍携带工具定义：请检查应用的按阶段工具逻辑。')
    answer=FINAL_ANSWERS[o['kind']]
    message={'role':'assistant','content':answer}; reason='stop'
   else:

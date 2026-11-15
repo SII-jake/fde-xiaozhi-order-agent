@@ -57,7 +57,7 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策。不编造事实。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。用户消息中给出的当前时间即本次处理时间，判断是否超过承诺送达日期、是否满足「超过三天」等政策时限时必须使用该时间。"
+SYSTEM="你是订单延误调查助手。查询证据与政策。不编造事实。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。用户消息中给出的当前时间即本次处理时间，判断是否超过承诺送达日期、是否满足「超过三天」等政策时限时必须使用该时间。答复要求出现在消息末尾时，调查已经完成：该请求不再提供任何工具，不得发起新的工具调用，只依据消息中已有的证据和结果撰写最终答复。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
@@ -88,7 +88,10 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
  for step in range(max_turns):
   call_id=str(uuid.uuid4()); started=time.time()
   call_started = time.perf_counter()
-  request={'model':model,'messages':copy.deepcopy(messages),'tools':definitions(),'temperature':temperature,'max_tokens':max_tokens}
+  # 按阶段提供工具：调查阶段携带全部工具定义供取证；答复要求消息
+  # 已追加（取证完成、只剩撰写最终答复）后，末次请求清空工具列表，
+  # 消息历史保留全部已查到的结果，模型只依据既有证据作答。
+  request={'model':model,'messages':copy.deepcopy(messages),'tools':definitions() if not requirements_sent else [],'temperature':temperature,'max_tokens':max_tokens}
   common={'task_id':task_id,'call_id':call_id,'turn':1,'step_id':call_id,'model_call_index':step+1,'attempt':1}
   history.write({
    **common, 'event': 'llm_request',
@@ -147,7 +150,8 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
    messages.append({'role':'tool','tool_call_id':call['id'],'content':result if isinstance(result,str) else json.dumps(result,ensure_ascii=False)})
   # 调查阶段发给模型的请求不含答复格式要求。所需证据（仓库事件、政策
   # 正文）与物流复查都已返回后，由应用在消息列表末尾追加一条写明答复
-  # 要求的用户消息；用户原始问题保持原样。此后模型须给出最终答复。
+  # 要求的用户消息；用户原始问题保持原样。此后模型须给出最终答复：
+  # 该次请求清空工具列表（见上方按阶段提供工具的逻辑）。
   if not requirements_sent and evidence_complete(messages):
    messages.append({'role':'user','content':REPLY_REQUIREMENTS})
    requirements_sent = True

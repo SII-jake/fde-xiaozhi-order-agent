@@ -61,6 +61,25 @@ class AgentTests(unittest.TestCase):
     self.assertNotIn('每项最多一句',json.dumps(request['messages'],ensure_ascii=False))
    self.assertNotIn('结论与证据',SYSTEM)
    self.assertNotIn('待确认',SYSTEM)
+ def test_tools_are_staged_and_final_request_has_no_tools(self):
+  # 按阶段提供工具：调查阶段各请求保留全部取证工具；取证完成、
+  # 只剩撰写最终答复的末次请求清空工具列表。
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl'
+   answer=run(MockClient(),p,user_message=QUESTION)
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   requests=[e['request'] for e in events if e['event']=='llm_request']
+   self.assertEqual(len(requests),5)
+   for request in requests[:-1]:
+    self.assertEqual(len(request['tools']),13)
+    self.assertIn('get_warehouse_events',{t['function']['name'] for t in request['tools']})
+   self.assertEqual(requests[-1]['tools'],[])
+   # 末次请求虽无工具，消息历史保留全部已查到的结果：政策正文
+   # （精简版）与物流复查结果都在，模型据此撰写答复。
+   final_messages=requests[-1]['messages']
+   self.assertTrue(any(m.get('role')=='tool' and '文件编号：P-DELAY' in str(m.get('content','')) for m in final_messages))
+   self.assertTrue(any(m.get('role')=='tool' and '中转站延误' in str(m.get('content','')) for m in final_messages))
+   self.assertIn('不能保证',answer)
  def test_final_request_ends_with_requirements_message(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/'trace.jsonl'
