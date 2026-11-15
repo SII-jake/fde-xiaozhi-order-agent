@@ -5,7 +5,7 @@ from order_agent.mock_latency import simulate_latency, validate_settings
 from order_agent.app import resolve_order_id, run
 from order_agent import app
 from order_agent.client import MockClient
-from order_agent.tools import definitions,execute,SPECS
+from order_agent.tools import definitions,execute,SPECS,POLICY_DOCUMENT_TEXT,slim_policy_document
 from order_agent.analyze import summarize
 QUESTION = '订单 A1024 应该昨天到货，现在还没收到。请调查并建议下一步。'
 
@@ -71,6 +71,31 @@ class AgentTests(unittest.TestCase):
    self.assertEqual(len(evidence),5)
    self.assertEqual(evidence[0]['name'],'get_warehouse_events')
    self.assertEqual(evidence[1]['result']['events'][0]['event'],'中转站延误')
+ def test_slim_policy_document_keeps_id_and_body(self):
+  slim=execute('get_policy_document',{'policy_id':'P-DELAY'})
+  self.assertIn('文件编号：P-DELAY',slim)
+  self.assertIn('适用范围与证据核对',slim)
+  self.assertIn('补偿审核和人工升级',slim)
+  self.assertIn('超过承诺送达日期三天',slim)
+  for excluded in ('## 目录','编制说明','分发范围','生效日期'):
+   self.assertNotIn(excluded,slim)
+  self.assertLess(len(slim),len(POLICY_DOCUMENT_TEXT))
+ def test_policy_document_trace_keeps_markdown_original(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl';evidence=[]
+   run(MockClient(),p,user_message=QUESTION,on_tool=evidence.append)
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   tool_events=[e for e in events if e['event']=='tool_execution' and e['name']=='get_policy_document']
+   self.assertEqual(len(tool_events),1)
+   self.assertEqual(tool_events[0]['result'],POLICY_DOCUMENT_TEXT)
+   policy_tool=[e for e in evidence if e['name']=='get_policy_document']
+   self.assertEqual(policy_tool[0]['result'],POLICY_DOCUMENT_TEXT)
+   requests=[e for e in events if e['event']=='llm_request']
+   policy_messages=[m for m in requests[-1]['request']['messages'] if m.get('role')=='tool']
+   policy_content=[m['content'] for m in policy_messages if '文件编号：P-DELAY' in m['content']]
+   self.assertTrue(policy_content)
+   self.assertIn('适用范围与证据核对',policy_content[0])
+   self.assertNotIn('编制说明',policy_content[0])
  def test_tools(self):
   self.assertEqual(len(definitions()),13)
   for name,(_,key) in SPECS.items():

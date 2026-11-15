@@ -5,6 +5,22 @@ from .mock_latency import simulate_latency
 ORDERS = json.loads((Path(__file__).resolve().parents[1]/"materials/orders.json").read_text())
 POLICY = {"id":"P-DELAY", "text":"晚于承诺日期可跟进仓库或承运商；超过三天才进入补偿资格审核。预计送达时间不是保证。证据冲突须升级人工。"}
 POLICY_DOCUMENT = Path(__file__).resolve().parents[1] / "materials/order-delay-policy.md"
+POLICY_DOCUMENT_TEXT = POLICY_DOCUMENT.read_text(encoding="utf-8")
+
+def slim_policy_document(markdown):
+ """Model-facing policy excerpt: policy ID and body sections only.
+ Cover page, table of contents and drafting notes are dropped; the
+ 适用范围/例外/补偿门槛 clauses live in the body and are kept."""
+ policy_id=None; body_start=None
+ lines=markdown.splitlines()
+ for index,line in enumerate(lines):
+  if policy_id is None and '文件编号' in line and '：' in line:
+   policy_id=line.split('：',1)[1].strip()
+  if line.strip()=='## 正文':
+   body_start=index+1
+ if policy_id is None or body_start is None: return markdown
+ body='\n'.join(lines[body_start:]).strip()
+ return '文件编号：'+policy_id+'\n\n'+body
 
 
 def combined_order_and_tracking(order_id):
@@ -57,6 +73,8 @@ def execute(name,args):
  if name=='search_policy': return {'matches':[POLICY]}
  if name=='get_policy_document':
   if value!=POLICY['id']: raise ValueError('Unknown policy')
-  return POLICY_DOCUMENT.read_text(encoding='utf-8')
+  # The model receives the slim excerpt (policy ID + body); tracing
+  # keeps the full Markdown via POLICY_DOCUMENT_TEXT below.
+  return slim_policy_document(POLICY_DOCUMENT_TEXT)
  if name=='check_compensation_eligibility': return {'eligible':False,'reason':'案例延误一天，尚未达到超过三天的审核门槛','policy_id':POLICY['id']}
  return {'draft_id':'DRAFT-'+value,'status':'awaiting_human_confirmation','submitted':False}

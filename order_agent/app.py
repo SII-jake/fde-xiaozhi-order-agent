@@ -1,7 +1,7 @@
 import argparse, copy, json, logging, re, time, uuid
 from pathlib import Path
 from .client import MockClient, APIClient
-from .tools import definitions, execute, ORDERS
+from .tools import definitions, execute, ORDERS, POLICY_DOCUMENT_TEXT
 from .config import load_config, DEFAULT_CONFIG
 from .mock_latency import configure as configure_mock_latency
 from .trajectory import default_path, write_trajectory
@@ -107,19 +107,23 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
      # The order was prefetched before the first model call; reuse it.
      result=order
     else:
+     # get_policy_document returns the slim excerpt (policy ID + body).
      result=execute(function['name'],json.loads(function['arguments']))
    except Exception as e: result={'error':str(e)}; status='error'
    elapsed = time.perf_counter() - tool_started
+   # Tracing and browser evidence keep the full Markdown original for
+   # troubleshooting; only the model message carries the slim excerpt.
+   logged_result = POLICY_DOCUMENT_TEXT if function['name']=='get_policy_document' and status=='ok' else result
    history.write({
     **common, 'event': 'tool_execution', 'step_id': call['id'],
     'tool_call_id': call['id'], 'name': function['name'],
-    'arguments': function['arguments'], 'result': result,
+    'arguments': function['arguments'], 'result': logged_result,
     'status': status, 'started_at': started, 'elapsed_seconds': elapsed,
    })
    logger.info("tool.end session=%s model_call=%s step=%s name=%s status=%s elapsed_ms=%.3f result=%s",
-               task_id[:8], call_id[:8], call['id'], function['name'], status, elapsed*1000, json.dumps(result,ensure_ascii=False))
+               task_id[:8], call_id[:8], call['id'], function['name'], status, elapsed*1000, json.dumps(logged_result,ensure_ascii=False))
    if on_tool is not None:
-    on_tool({'name':function['name'], 'arguments':function['arguments'], 'result':result, 'status':status, 'tool_call_id':call['id']})
+    on_tool({'name':function['name'], 'arguments':function['arguments'], 'result':logged_result, 'status':status, 'tool_call_id':call['id']})
    messages.append({'role':'tool','tool_call_id':call['id'],'content':result if isinstance(result,str) else json.dumps(result,ensure_ascii=False)})
  history.write({'task_id':task_id,'event':'task_end','status':'turn_limit'}); raise RuntimeError('Maximum model turns reached')
 def main():
