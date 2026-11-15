@@ -1,4 +1,4 @@
-"""Twelve read-only mock business tools (draft creation has no external side effects)."""
+"""Thirteen read-only mock business tools (draft creation has no external side effects)."""
 import json
 from pathlib import Path
 from .mock_latency import simulate_latency
@@ -7,8 +7,20 @@ POLICY = {"id":"P-DELAY", "text":"晚于承诺日期可跟进仓库或承运商�
 POLICY_DOCUMENT = Path(__file__).resolve().parents[1] / "materials/order-delay-policy.md"
 
 
+def combined_order_and_tracking(order_id):
+    """Read-only composite lookup: order first, then tracking via the order's tracking number."""
+    order = execute("get_order", {"order_id": order_id})
+    tracking_number = order.get("tracking_number")
+    tracking = (
+        execute("get_tracking", {"tracking_number": tracking_number})
+        if tracking_number else None
+    )
+    return {"order": order, "tracking": tracking}
+
+
 SPECS = {
  "get_order":("查询订单详情", "order_id"),
+ "get_order_and_tracking":("查订单和物流：先查订单，再用订单返回的运单号查物流，一并返回订单信息和物流记录", "order_id"),
  "get_order_items":("查询商品明细", "order_id"),
  "get_customer_profile":("查询客户资料和会员等级", "customer_id"),
  "get_customer_order_history":("查询客户历史订单", "customer_id"),
@@ -31,6 +43,7 @@ def execute(name,args):
  if key=='order_id' and value not in ORDERS: raise ValueError('Unknown order')
  o=ORDERS.get(value)
  if name=='get_order': return {k:v for k,v in o.items() if k not in ['items','warehouse_events','tracking_events','support_history']}
+ if name=='get_order_and_tracking': return combined_order_and_tracking(value)
  if name=='get_order_items': return o['items']
  if name=='get_customer_profile': return {'customer_id':value,'tier':'standard','region':'Shanghai'}
  if name=='get_customer_order_history': return [x for x in ORDERS.values() if x['customer_id']==value]

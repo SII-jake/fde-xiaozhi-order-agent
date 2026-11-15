@@ -72,11 +72,24 @@ class AgentTests(unittest.TestCase):
    self.assertEqual(evidence[0]['name'],'get_warehouse_events')
    self.assertEqual(evidence[1]['result']['events'][0]['event'],'中转站延误')
  def test_tools(self):
-  self.assertEqual(len(definitions()),12)
+  self.assertEqual(len(definitions()),13)
   for name,(_,key) in SPECS.items():
    value={'order_id':'A1024','customer_id':'C001','tracking_number':'TA1024','region':'Shanghai','query':'delay','policy_id':'P-DELAY'}[key]
    self.assertIsNotNone(execute(name,{key:value}))
   self.assertFalse(execute('create_escalation_draft',{'order_id':'A1024'})['submitted'])
+ def test_combined_order_and_tracking_tool(self):
+  combined=execute('get_order_and_tracking',{'order_id':'A1024'})
+  self.assertEqual(combined['order']['order_id'],'A1024')
+  self.assertEqual(combined['order']['tracking_number'],'TA1024')
+  self.assertEqual(combined['tracking']['events'][0]['event'],'中转站延误')
+  combined_names={tool['function']['name'] for tool in definitions()}
+  self.assertIn('get_order_and_tracking',combined_names)
+  untouched=execute('get_order',{'order_id':'A1024'})
+  self.assertEqual(untouched['tracking_number'],'TA1024')
+ def test_combined_tool_returns_empty_tracking_before_dispatch(self):
+  combined=execute('get_order_and_tracking',{'order_id':'A1025'})
+  self.assertEqual(combined['order']['status'],'awaiting_dispatch')
+  self.assertEqual(combined['tracking']['events'],[])
  @unittest.skipUnless(hasattr(app,'History'), 'Complete history is the lesson1-end exercise')
  def test_limit_is_recorded(self):
   with tempfile.TemporaryDirectory() as d:
