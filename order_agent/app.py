@@ -1,13 +1,36 @@
-import argparse, copy, json, logging, time, uuid
+import argparse, copy, json, logging, re, time, uuid
 from pathlib import Path
 from .client import MockClient, APIClient
-from .tools import definitions, execute
+from .tools import definitions, execute, ORDERS
 from .config import load_config, DEFAULT_CONFIG
 from .mock_latency import configure as configure_mock_latency
 from .trajectory import default_path, write_trajectory
 DEFAULT_MODEL = 'Qwen/Qwen3-235B-A22B-Instruct-2507'
 DETAILED_REPLY = '请详细说明调查过程、所有核查结果和处理建议。'
 logger = logging.getLogger("order_agent")
+ORDER_NUMBER = re.compile(r'(?<![A-Za-z0-9])A[0-9]{4}(?![A-Za-z0-9])', re.IGNORECASE | re.ASCII)
+
+def prefetch_order(order_id):
+    """First-model-call order prefetch: only the order, never the tracking."""
+    return execute('get_order', {'order_id': order_id})
+
+def prefetch_message(order, user_text):
+    return (
+        user_text + '\n订单信息（应用预取，含运单号，无需再查订单）：'
+        + json.dumps(order, ensure_ascii=False, separators=(',', ':'))
+    )
+
+
+def resolve_order_id(question):
+    order_ids = {match.upper() for match in ORDER_NUMBER.findall(question)}
+    if not order_ids:
+        raise ValueError('请在问题中注明订单号，例如 A1024。')
+    if len(order_ids) > 1:
+        raise ValueError('一次只能调查一笔订单，请确认要查哪一个订单号。')
+    order_id = order_ids.pop()
+    if order_id not in ORDERS:
+        raise ValueError(f'没有找到订单 {order_id}，请核对订单号。')
+    return order_id
 
 def configure_logging():
  logging.basicConfig(
@@ -16,7 +39,7 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。根据用户问题确定订单号，订单号缺失或不明确时先请用户确认。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。订单号和权限已确认时，须在同一次响应中发出查订单和查仓库两条工具调用；首次查物流必须等查订单结果带回运单号之后才能进行；最终答复前须复查物流。"
+SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
@@ -24,11 +47,20 @@ class History:
  def write(self,event):
   with self.path.open('a') as f: f.write(json.dumps(event,ensure_ascii=False)+'\n')
 def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=1024,*,user_message,on_tool=None,processing_time=None):
+ order_id=resolve_order_id(user_message)
  task_id=str(uuid.uuid4()); history=History(path)
  task_started = time.perf_counter()
- logger.info("task.start session=%s", task_id[:8])
- messages=[{'role':'system','content':SYSTEM},{'role':'user','content':user_message}]
- case_time = processing_time or '2026-10-29 09:15'
+ logger.info("task.start session=%s order=%s", task_id[:8], order_id)
+ started=time.time()
+ prefetch_started = time.perf_counter()
+ try: order=prefetch_order(order_id)
+ except Exception as e:
+  history.write({'task_id':task_id,'event':'application_prefetch','turn':1,'step_id':str(uuid.uuid4()),'name':'get_order','status':'error','error':str(e)}); raise
+ elapsed = time.perf_counter() - prefetch_started
+ history.write({'task_id':task_id,'event':'application_prefetch','turn':1,'step_id':str(uuid.uuid4()),'name':'get_order','arguments':json.dumps({'order_id':order_id},ensure_ascii=False),'result':order,'status':'ok','started_at':started,'elapsed_seconds':elapsed})
+ logger.info("prefetch.end session=%s name=get_order order=%s status=ok elapsed_ms=%.3f", task_id[:8], order_id, elapsed*1000)
+ messages=[{'role':'system','content':SYSTEM},{'role':'user','content':prefetch_message(order,user_message)}]
+ case_time = processing_time or ORDERS[order_id]['as_of'] + ' 09:15'
  time_message = f'当前时间：{case_time}。'
  messages[0]['content'] = time_message + '\n' + SYSTEM
  for step in range(max_turns):
@@ -70,7 +102,12 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
    started=time.time(); function=call['function']; status='ok'
    tool_started = time.perf_counter()
    logger.info("tool.start session=%s model_call=%s step=%s name=%s arguments=%s", task_id[:8], call_id[:8], call['id'], function['name'], function['arguments'])
-   try: result=execute(function['name'],json.loads(function['arguments']))
+   try:
+    if function['name']=='get_order':
+     # The order was prefetched before the first model call; reuse it.
+     result=order
+    else:
+     result=execute(function['name'],json.loads(function['arguments']))
    except Exception as e: result={'error':str(e)}; status='error'
    elapsed = time.perf_counter() - tool_started
    history.write({
@@ -102,6 +139,8 @@ def main():
  destination = a.trajectory if a.trajectory is not None else default_path(path)
  try:
   print(run(client,path,llm['model'],config['agent']['max_turns'],llm['temperature'],llm['max_tokens'],user_message=a.question,processing_time=a.processing_time))
+ except ValueError as exc:
+  p.error(str(exc))
  finally:
   if path.exists():
    write_trajectory(path, destination)
