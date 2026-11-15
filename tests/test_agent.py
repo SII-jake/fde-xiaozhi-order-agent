@@ -2,12 +2,13 @@ import json,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from order_agent.mock_latency import simulate_latency, validate_settings
-from order_agent.app import resolve_order_id, run
+from order_agent.app import resolve_order_id, run, evidence_complete, SYSTEM
+from order_agent.client import MockClient, REPLY_REQUIREMENTS
 from order_agent import app
-from order_agent.client import MockClient
 from order_agent.tools import definitions,execute,SPECS,POLICY_DOCUMENT_TEXT,slim_policy_document
 from order_agent.analyze import summarize
 QUESTION = '订单 A1024 应该昨天到货，现在还没收到。请调查并建议下一步。'
+ANSWER_SECTIONS = ('结论与证据','预计时间','下一步','政策依据')
 
 class AgentTests(unittest.TestCase):
  def setUp(self):
@@ -44,6 +45,52 @@ class AgentTests(unittest.TestCase):
    self.assertTrue(any(m['role']=='tool' for m in requests[-1]['request']['messages']))
    self.assertEqual(len(summarize(p)['calls']),5)
    self.assertGreater(summarize(p)['calls'][0]['usage']['prompt_tokens'], 0)
+ def test_investigation_requests_carry_no_reply_requirements(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl'
+   run(MockClient(),p,user_message=QUESTION)
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   requests=[e['request'] for e in events if e['event']=='llm_request']
+   # 调查阶段的请求不含答复格式要求：系统提示、首条用户消息都没有，
+   # 也没有任何单独的答复要求消息。
+   self.assertEqual(len(requests),5)
+   for request in requests[:-1]:
+    for message in request['messages']:
+     self.assertNotEqual(message.get('content'),REPLY_REQUIREMENTS)
+    self.assertNotIn('结论与证据',request['messages'][0]['content'])
+    self.assertNotIn('每项最多一句',json.dumps(request['messages'],ensure_ascii=False))
+   self.assertNotIn('结论与证据',SYSTEM)
+   self.assertNotIn('待确认',SYSTEM)
+ def test_final_request_ends_with_requirements_message(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl'
+   answer=run(MockClient(),p,user_message=QUESTION)
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   requests=[e['request'] for e in events if e['event']=='llm_request']
+   final_request=requests[-1]
+   tail=final_request['messages'][-1]
+   self.assertEqual(tail['role'],'user')
+   self.assertEqual(tail['content'],REPLY_REQUIREMENTS)
+   # 用户原始问题保持原样，仍在首条用户消息里。
+   self.assertTrue(final_request['messages'][1]['content'].startswith(QUESTION))
+   # 答复要求之前，物流复查结果必须已经返回。
+   tool_names=[m['tool_call_id'] for m in final_request['messages'] if m.get('role')=='tool']
+   self.assertTrue(tool_names)
+   self.assertTrue(any(m.get('role')=='tool' and '中转站延误' in str(m.get('content','')) for m in final_request['messages'][-4:]))
+   self.assertIn('不能保证',answer)
+   for section in ANSWER_SECTIONS:
+    self.assertIn(section,answer)
+ def test_evidence_complete_requires_recheck_after_policy(self):
+  def batch(names,calls):
+   assistant={'role':'assistant','content':None,'tool_calls':[{'id':'tool-'+name+str(index),'type':'function','function':{'name':name,'arguments':'{}'}} for index,name in enumerate(names)]}
+   tools=[{'role':'tool','tool_call_id':'tool-'+name+str(index),'content':'{}'} for index,name in enumerate(names)]
+   return [{'role':'user','content':'q'},assistant,*tools]
+  # 仓库与政策已返回，但物流复查尚未发生：不能注入答复要求。
+  self.assertFalse(evidence_complete(batch(['get_warehouse_events','get_policy_document'],None)))
+  # 物流复查在政策正文之后返回：可以注入。
+  self.assertTrue(evidence_complete(batch(['get_warehouse_events','get_tracking','get_policy_document','get_tracking'],None)))
+  # 物流复查在政策正文之前：不算复查完成。
+  self.assertFalse(evidence_complete(batch(['get_warehouse_events','get_tracking','get_policy_document'],None)))
  def test_prefetched_order_is_reused_without_tool_call(self):
   with tempfile.TemporaryDirectory() as d:
    evidence=[]

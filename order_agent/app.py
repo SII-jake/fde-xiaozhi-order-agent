@@ -1,12 +1,11 @@
 import argparse, copy, json, logging, re, time, uuid
 from pathlib import Path
-from .client import MockClient, APIClient
+from .client import MockClient, APIClient, REPLY_REQUIREMENTS
 from .tools import definitions, execute, ORDERS, POLICY_DOCUMENT_TEXT
 from .config import load_config, DEFAULT_CONFIG
 from .mock_latency import configure as configure_mock_latency
 from .trajectory import default_path, write_trajectory
 DEFAULT_MODEL = 'Qwen/Qwen3-235B-A22B-Instruct-2507'
-DETAILED_REPLY = '请详细说明调查过程、所有核查结果和处理建议。'
 logger = logging.getLogger("order_agent")
 ORDER_NUMBER = re.compile(r'(?<![A-Za-z0-9])A[0-9]{4}(?![A-Za-z0-9])', re.IGNORECASE | re.ASCII)
 
@@ -20,6 +19,25 @@ def prefetch_message(order, user_text):
         + json.dumps(order, ensure_ascii=False, separators=(',', ':'))
     )
 
+
+REQUIRED_EVIDENCE = frozenset({'get_warehouse_events','get_policy_document','get_tracking'})
+
+def evidence_complete(messages):
+ """Warehouse events and the policy document have returned, and the
+ post-investigation tracking recheck has also come back: the app may ask
+ for the final reply. Tool names are mapped back from assistant
+ tool_calls via tool_call_id, and the recheck is recognized as a
+ get_tracking result appended after the last get_policy_document result."""
+ names_by_id={}; answered=[]
+ for message in messages:
+  if message.get('role')=='assistant':
+   for call in message.get('tool_calls') or []:
+    names_by_id[call['id']]=call['function']['name']
+  elif message.get('role')=='tool':
+   answered.append(names_by_id.get(message.get('tool_call_id')))
+ last_policy=max((index for index,name in enumerate(answered) if name=='get_policy_document'),default=-1)
+ rechecked=any(name=='get_tracking' for name in answered[last_policy+1:])
+ return last_policy>=0 and rechecked and REQUIRED_EVIDENCE.issubset(answered)
 
 def resolve_order_id(question):
     order_ids = {match.upper() for match in ORDER_NUMBER.findall(question)}
@@ -39,7 +57,7 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。"
+SYSTEM="你是订单延误调查助手。查询证据与政策。不编造事实。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
@@ -63,12 +81,11 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
  case_time = processing_time or ORDERS[order_id]['as_of'] + ' 09:15'
  time_message = f'当前时间：{case_time}。'
  messages[0]['content'] = time_message + '\n' + SYSTEM
+ requirements_sent = False
  for step in range(max_turns):
   call_id=str(uuid.uuid4()); started=time.time()
   call_started = time.perf_counter()
   request={'model':model,'messages':copy.deepcopy(messages),'tools':definitions(),'temperature':temperature,'max_tokens':max_tokens}
-  if step == 5 and isinstance(client, MockClient):
-   request['messages'].append({'role':'user','content':DETAILED_REPLY})
   common={'task_id':task_id,'call_id':call_id,'turn':1,'step_id':call_id,'model_call_index':step+1,'attempt':1}
   history.write({
    **common, 'event': 'llm_request',
@@ -125,6 +142,13 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
    if on_tool is not None:
     on_tool({'name':function['name'], 'arguments':function['arguments'], 'result':logged_result, 'status':status, 'tool_call_id':call['id']})
    messages.append({'role':'tool','tool_call_id':call['id'],'content':result if isinstance(result,str) else json.dumps(result,ensure_ascii=False)})
+  # 调查阶段发给模型的请求不含答复格式要求。所需证据（仓库事件、政策
+  # 正文）与物流复查都已返回后，由应用在消息列表末尾追加一条写明答复
+  # 要求的用户消息；用户原始问题保持原样。此后模型须给出最终答复。
+  if not requirements_sent and evidence_complete(messages):
+   messages.append({'role':'user','content':REPLY_REQUIREMENTS})
+   requirements_sent = True
+   logger.info("reply.requirements session=%s appended after evidence and tracking recheck", task_id[:8])
  history.write({'task_id':task_id,'event':'task_end','status':'turn_limit'}); raise RuntimeError('Maximum model turns reached')
 def main():
  configure_logging()
