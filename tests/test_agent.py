@@ -7,13 +7,15 @@ from order_agent import app
 from order_agent.client import MockClient
 from order_agent.tools import definitions,execute,SPECS
 from order_agent.analyze import summarize
+QUESTION = '订单 A1024 应该昨天到货，现在还没收到。请调查并建议下一步。'
+
 class AgentTests(unittest.TestCase):
  def setUp(self):
   sleeper=patch('order_agent.mock_latency.time.sleep')
   self.sleep=sleeper.start(); self.addCleanup(sleeper.stop)
  def test_model_and_tool_simulate_waiting(self):
   with patch('order_agent.mock_latency.random.uniform', return_value=0.123) as uniform:
-   MockClient('A1024').complete({'model':'mock-latency-test','messages':[]})
+   MockClient().complete({'model':'mock-latency-test','messages':[{'role':'user','content':QUESTION}]})
    execute('get_order', {'order_id':'A1024'})
   self.assertEqual(uniform.call_args_list[0].args, (0.3, 0.9))
   self.assertEqual(uniform.call_args_list[1].args, (0.05, 0.2))
@@ -25,7 +27,7 @@ class AgentTests(unittest.TestCase):
  @unittest.skipUnless(hasattr(app,'History'), 'Complete history is the lesson1-end exercise')
  def test_trace_reconstructs_business_flow(self):
   with tempfile.TemporaryDirectory() as d:
-   p=Path(d)/'trace.jsonl';answer=run(MockClient('A1024'),'A1024',p)
+   p=Path(d)/'trace.jsonl';answer=run(MockClient(),p,user_message=QUESTION)
    events=[json.loads(x) for x in p.read_text().splitlines()]
    self.assertIn('运输',answer)
    requests=[e for e in events if e['event']=='llm_request']
@@ -37,7 +39,7 @@ class AgentTests(unittest.TestCase):
  def test_business_answer_and_browser_evidence(self):
   with tempfile.TemporaryDirectory() as d:
    evidence=[]
-   answer=run(MockClient('A1024'),'A1024',Path(d)/'trace.jsonl',on_tool=evidence.append)
+   answer=run(MockClient(),Path(d)/'trace.jsonl',user_message=QUESTION,on_tool=evidence.append)
    self.assertIn('运输',answer)
    self.assertEqual(len(evidence),6)
    self.assertEqual(evidence[0]['result']['tracking_number'],'TA1024')
@@ -51,7 +53,7 @@ class AgentTests(unittest.TestCase):
  def test_limit_is_recorded(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/'trace.jsonl'
-   with self.assertRaises(RuntimeError):run(MockClient('A1024'),'A1024',p,max_turns=1)
+   with self.assertRaises(RuntimeError):run(MockClient(),p,max_turns=1,user_message=QUESTION)
    self.assertEqual(json.loads(p.read_text().splitlines()[-1])['status'],'turn_limit')
  def test_unknown_order(self):
   with self.assertRaises(ValueError):execute('get_order',{'order_id':'missing'})

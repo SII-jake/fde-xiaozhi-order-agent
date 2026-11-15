@@ -1,7 +1,7 @@
 import argparse, copy, json, logging, time, uuid
 from pathlib import Path
 from .client import MockClient, APIClient
-from .tools import definitions, execute, ORDERS
+from .tools import definitions, execute
 from .config import load_config, DEFAULT_CONFIG
 from .mock_latency import configure as configure_mock_latency
 from .trajectory import default_path, write_trajectory
@@ -16,19 +16,19 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
+SYSTEM="你是订单延误调查助手。查询证据与政策，给出当前情况、原因与证据、建议行动及政策依据。根据用户问题确定订单号，订单号缺失或不明确时先请用户确认。不编造事实，不保证预计日期，证据冲突时升级人工。所有操作仅供人工审核。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
   self.path.touch(exist_ok=False)
  def write(self,event):
   with self.path.open('a') as f: f.write(json.dumps(event,ensure_ascii=False)+'\n')
-def run(client,order_id,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=1024,user_message=None,on_tool=None,processing_time=None):
+def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=1024,*,user_message,on_tool=None,processing_time=None):
  task_id=str(uuid.uuid4()); history=History(path)
  task_started = time.perf_counter()
- logger.info("task.start session=%s order=%s", task_id[:8], order_id)
- messages=[{'role':'system','content':SYSTEM},{'role':'user','content':user_message or f'订单{order_id}应该昨天到货，现在还没收到。请调查并建议下一步。'}]
- case_time = processing_time or ORDERS[order_id]['as_of'] + ' 09:15'
+ logger.info("task.start session=%s", task_id[:8])
+ messages=[{'role':'system','content':SYSTEM},{'role':'user','content':user_message}]
+ case_time = processing_time or '2026-10-29 09:15'
  time_message = f'当前时间：{case_time}。'
  messages[0]['content'] = time_message + '\n' + SYSTEM
  for step in range(max_turns):
@@ -89,7 +89,7 @@ def main():
  configure_logging()
  p=argparse.ArgumentParser(description="小智的订单调查助手")
  p.add_argument('--config',default=str(DEFAULT_CONFIG),help='JSON配置文件')
- p.add_argument('--order',choices=list(ORDERS),default='A1024',help='业务订单编号')
+ p.add_argument('question', help='包含订单号的原始问题，例如：A1024 为什么还没到？')
  p.add_argument('--trajectory', type=Path, help='输出会话轨迹 JSON 的路径')
  p.add_argument('--processing-time', help='覆盖案例处理时间，示例 2026-10-30 14:40')
  a=p.parse_args()
@@ -98,10 +98,10 @@ def main():
  config=load_config(a.config); llm=config['llm']
  configure_mock_latency(config['mock'])
  path=Path(config['tracing']['directory'])/(str(uuid.uuid4())+'.jsonl')
- client=MockClient(a.order) if llm['backend']=='mock' else APIClient(llm['base_url'],llm['timeout_seconds'])
+ client=MockClient() if llm['backend']=='mock' else APIClient(llm['base_url'],llm['timeout_seconds'])
  destination = a.trajectory if a.trajectory is not None else default_path(path)
  try:
-  print(run(client,a.order,path,llm['model'],config['agent']['max_turns'],llm['temperature'],llm['max_tokens'],processing_time=a.processing_time))
+  print(run(client,path,llm['model'],config['agent']['max_turns'],llm['temperature'],llm['max_tokens'],user_message=a.question,processing_time=a.processing_time))
  finally:
   if path.exists():
    write_trajectory(path, destination)

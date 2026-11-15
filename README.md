@@ -9,7 +9,7 @@
 在项目根目录运行：
 
 ```sh
-python3 -m order_agent.app --order A1024
+python3 -m order_agent.app "A1024 为什么还没到？"
 ```
 
 启动浏览器界面：
@@ -18,14 +18,14 @@ python3 -m order_agent.app --order A1024
 python3 -m order_agent.web
 ```
 
-打开 [订单工作台](http://127.0.0.1:8080)，选择订单，展开工具记录查看调查证据。使用 `--port 8081` 可以更换端口。
+打开 [订单工作台](http://127.0.0.1:8080)，直接发送包含订单号的问题，例如「A1024 为什么还没到？」。展开工具记录即可查看调查证据。每次调查一笔订单。使用 `--port 8081` 可以更换端口。
 
 ## 连接模型服务
 
 在 [API 配置](config/api.json)中填写服务的 `base_url`（包含 `/v1`）和对外模型名。服务需要支持 Chat Completions 工具调用。如需鉴权，通过环境变量 `LLM_API_KEY` 提供密钥。
 
 ```sh
-python3 -m order_agent.app --config config/api.json --order A1024
+python3 -m order_agent.app --config config/api.json "A1024 为什么还没到？"
 python3 -m order_agent.web --config config/api.json
 ```
 
@@ -36,7 +36,7 @@ python3 -m order_agent.web --config config/api.json
 每次调查会生成原始 JSONL 日志和会话轨迹 JSON，包含实际发出的模型请求、响应、耗时、工具参数和结果。CLI 可以指定尚不存在的输出路径：
 
 ```sh
-python3 -m order_agent.app --order A1024 --trajectory traces/a1024.json
+python3 -m order_agent.app --trajectory traces/a1024.json "A1024 为什么还没到？"
 python3 -m order_agent.analyze traces/a1024.json
 ```
 
@@ -63,7 +63,7 @@ python3 materials/bench.py
 在参考分支运行：
 
 ```sh
-python3 -m order_agent.app --config config/optimized.json --order A1024
+python3 -m order_agent.app --config config/optimized.json
 python3 -m materials.compare
 ```
 

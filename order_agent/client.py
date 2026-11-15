@@ -4,9 +4,21 @@ from .tools import ORDERS
 from .mock_latency import simulate_latency
 class MockClient:
  """Scripted fixture, NOT an LLM. Usage is estimated for classroom replay."""
- def __init__(self,order_id): self.order_id=order_id; self.step=0
+ def __init__(self):
+  self.order_id = None
+  self.step = 0
  def complete(self,request):
   simulate_latency('model')
+  if self.order_id is None:
+   question=next((m.get('content','') for m in request['messages'] if m.get('role')=='user'),'')
+   # The mock uses fixture IDs from the message to simulate the model's choice.
+   words=''.join(c if c.isascii() and c.isalnum() else ' ' for c in question.upper()).split()
+   orders=[order_id for order_id in ORDERS if order_id in words]
+   if len(orders)!=1:
+    message={'role':'assistant','content':'请在问题中写明一笔有效订单的订单号，例如 A1024。'}
+    return {'id':'mock-clarification','model':request['model'],'choices':[{'message':message,'finish_reason':'stop'}],
+            'usage':estimate_usage(request,message,None),'teaching_mock':True,'usage_source':'mock_estimate'}
+   self.order_id=orders[0]
   o=ORDERS[self.order_id]
   steps=[('get_order',{'order_id':self.order_id}),('get_warehouse_events',{'order_id':self.order_id}),('get_tracking',{'tracking_number':o['tracking_number']}),('search_policy',{'query':'订单延误'}),('get_policy_document',{'policy_id':'P-DELAY'}),('get_tracking',{'tracking_number':o['tracking_number']})]
   if self.step<len(steps):

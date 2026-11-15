@@ -8,7 +8,6 @@ from .app import run, configure_logging
 from .mock_latency import configure as configure_mock_latency
 from .client import MockClient, APIClient
 from .config import load_config, DEFAULT_CONFIG
-from .tools import ORDERS
 from .trajectory import default_path, write_trajectory
 
 PAGE = Path(__file__).with_name('web.html')
@@ -32,8 +31,6 @@ def main():
         def do_GET(self):
             if self.path == '/':
                 self.send(200, PAGE.read_bytes(), 'text/html; charset=utf-8')
-            elif self.path == '/api/status':
-                self.send(200, {'backend': config['llm']['backend'], 'orders': list(ORDERS), 'details': ORDERS})
             else:
                 self.send(404, {'error': 'Not found'})
         def do_POST(self):
@@ -44,19 +41,16 @@ def main():
                 if not 0 < size <= 4096:
                     raise ValueError('Invalid request size')
                 payload = json.loads(self.rfile.read(size))
-                order = payload.get('order')
                 message = payload.get('message', '')
                 if not isinstance(message, str) or len(message) > 2000:
                     raise ValueError('Invalid message')
-                if order not in ORDERS:
-                    raise ValueError('Unknown order')
                 llm = config['llm']
                 path = Path(config['tracing']['directory']) / (str(uuid.uuid4()) + '.jsonl')
-                client = MockClient(order) if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
+                client = MockClient() if llm['backend'] == 'mock' else APIClient(llm['base_url'], llm['timeout_seconds'])
                 tool_events = []
                 trajectory = default_path(path)
                 try:
-                    answer = run(client, order, path, llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=f'订单编号：{order}。{message}' if message else None, on_tool=tool_events.append)
+                    answer = run(client, path, llm['model'], config['agent']['max_turns'], llm['temperature'], llm['max_tokens'], user_message=message, on_tool=tool_events.append)
                 finally:
                     if path.exists():
                         write_trajectory(path, trajectory)
