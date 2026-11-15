@@ -57,7 +57,7 @@ def configure_logging():
   datefmt="%H:%M:%S",
  )
 
-SYSTEM="你是订单延误调查助手。查询证据与政策。不编造事实。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。"
+SYSTEM="你是订单延误调查助手。查询证据与政策。不编造事实。所有操作仅供人工审核。用户消息中的订单信息由应用预取，不得重复调用查订单工具。需要同时取得订单信息和物流记录且尚未掌握运单号时，只调用一次「查订单和物流」组合工具，不要分别调用查订单和查物流。已提供运单号时，须在同一次响应中发出查仓库和首次查物流两条工具调用；两项结果都返回后再继续调查；最终答复前须复查物流。用户消息中给出的当前时间即本次处理时间，判断是否超过承诺送达日期、是否满足「超过三天」等政策时限时必须使用该时间。"
 class History:
  def __init__(self,path):
   self.path=Path(path); self.path.parent.mkdir(parents=True,exist_ok=True)
@@ -77,10 +77,13 @@ def run(client,path,model=DEFAULT_MODEL,max_turns=12,temperature=0,max_tokens=10
  elapsed = time.perf_counter() - prefetch_started
  history.write({'task_id':task_id,'event':'application_prefetch','turn':1,'step_id':str(uuid.uuid4()),'name':'get_order','arguments':json.dumps({'order_id':order_id},ensure_ascii=False),'result':order,'status':'ok','started_at':started,'elapsed_seconds':elapsed})
  logger.info("prefetch.end session=%s name=get_order order=%s status=ok elapsed_ms=%.3f", task_id[:8], order_id, elapsed*1000)
- messages=[{'role':'system','content':SYSTEM},{'role':'user','content':prefetch_message(order,user_message)}]
+ messages=[{'role':'system','content':SYSTEM}]
+ # 处理时间随首条用户消息注入，位于用户问题之后：系统消息与工具
+ # 定义保持固定，不同处理时间的请求可复用相同前缀（含首条用户消息
+ # 里的问题与预取订单信息），模型须用该时间判断政策时限。
  case_time = processing_time or ORDERS[order_id]['as_of'] + ' 09:15'
- time_message = f'当前时间：{case_time}。'
- messages[0]['content'] = time_message + '\n' + SYSTEM
+ user_content = prefetch_message(order,user_message) + f'\n当前时间：{case_time}。'
+ messages.append({'role':'user','content':user_content})
  requirements_sent = False
  for step in range(max_turns):
   call_id=str(uuid.uuid4()); started=time.time()

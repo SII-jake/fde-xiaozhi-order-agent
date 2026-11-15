@@ -80,6 +80,53 @@ class AgentTests(unittest.TestCase):
    self.assertIn('不能保证',answer)
    for section in ANSWER_SECTIONS:
     self.assertIn(section,answer)
+ def test_processing_time_keeps_stable_request_prefix(self):
+  # 不同处理时间复用相同请求前缀：系统消息只含固定指令，处理时间
+  # 放在用户问题之后，两个时间的请求序列化前缀须覆盖问题与预取
+  # 订单信息，系统消息完全相同。
+  requests_by_time={}
+  for processing_time in ('2026-10-29 09:15','2026-11-02 14:40'):
+   with tempfile.TemporaryDirectory() as d:
+    p=Path(d)/'trace.jsonl'
+    run(MockClient(),p,user_message=QUESTION,processing_time=processing_time)
+    events=[json.loads(x) for x in p.read_text().splitlines()]
+    first=[e for e in events if e['event']=='llm_request'][0]['request']
+    requests_by_time[processing_time]=first
+    self.assertEqual(first['messages'][0]['content'],SYSTEM)
+    # 系统消息只含固定指令：不含任何具体处理时间值。
+    self.assertNotIn(processing_time,first['messages'][0]['content'])
+    user_content=first['messages'][1]['content']
+    self.assertIn('当前时间：'+processing_time+'。',user_content)
+    self.assertTrue(user_content.startswith(QUESTION))
+    self.assertIn('应用预取',user_content)
+  # 序列化后的公共前缀须覆盖系统消息与首条用户消息里的问题和预取
+  # 订单信息（即处理时间之前的内容全部一致，模拟缓存块可命中）。
+  early=requests_by_time['2026-10-29 09:15']
+  late=requests_by_time['2026-11-02 14:40']
+  serialized=lambda request:json.dumps(request,ensure_ascii=False)
+  old=serialized(early); new=serialized(late)
+  prefix=0
+  for old_char,new_char in zip(old,new):
+   if old_char!=new_char: break
+   prefix+=1
+  # 公共前缀须覆盖 system 消息 + 首条用户消息里问题与预取订单信息
+  # （即到「当前时间」之前为止的全部固定内容）。
+  stable_part=old[:old.index('当前时间')]
+  self.assertGreaterEqual(prefix,len(stable_part))
+ def test_time_in_first_request_after_question(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'trace.jsonl'
+   run(MockClient(),p,user_message=QUESTION,processing_time='2026-11-02 14:40')
+   events=[json.loads(x) for x in p.read_text().splitlines()]
+   requests=[e['request'] for e in events if e['event']=='llm_request']
+   # 所有请求的系统消息都固定；时间只在首条用户消息里，位于问题之后。
+   for request in requests:
+    self.assertEqual(request['messages'][0]['content'],SYSTEM)
+   user_content=requests[0]['messages'][1]['content']
+   self.assertLess(user_content.index(QUESTION),user_content.index('当前时间：2026-11-02 14:40。'))
+   self.assertIn('2026-10-28',user_content)  # 预取订单信息仍在时间之前
+   # 模型仍能拿到判断时限所需时间：末次请求也包含该时间（消息累积保留）。
+   self.assertIn('当前时间：2026-11-02 14:40。',requests[-1]['messages'][1]['content'])
  def test_evidence_complete_requires_recheck_after_policy(self):
   def batch(names,calls):
    assistant={'role':'assistant','content':None,'tool_calls':[{'id':'tool-'+name+str(index),'type':'function','function':{'name':name,'arguments':'{}'}} for index,name in enumerate(names)]}
